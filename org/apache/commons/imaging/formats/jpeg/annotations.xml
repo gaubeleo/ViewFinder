@@ -1,0 +1,5 @@
+<root>
+    <item name='org.apache.commons.imaging.formats.jpeg.JpegImageMetadata'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+</root>
