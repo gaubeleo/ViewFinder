@@ -66,7 +66,7 @@ public class MetadataTest {
 
             new JpegXmpRewriter().updateXmpXml(src, os, newXMP.toString());
 
-            System.out.format("new rating of file '%s': %c", dst, rating);
+            System.out.format("new rating for '%s': %c", dst, rating);
         }
     }
 }
