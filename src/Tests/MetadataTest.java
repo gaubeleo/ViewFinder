@@ -17,6 +17,7 @@ package Tests;
  * limitations under the License.
  */
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,9 +29,12 @@ import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceFile;
 import org.apache.commons.imaging.formats.jpeg.JpegImageParser;
 import org.apache.commons.imaging.formats.jpeg.xmp.JpegXmpRewriter;
+import org.apache.commons.imaging.formats.tiff.TiffImageMetadata;
 
 
 public class MetadataTest {
+    TiffImageMetadata exif;
+
     public static void main(String[] args) {
         try {
             new MetadataTest().changeXMPRating(new File(".\\src\\data\\test.JPG"), new File(".\\src\\data\\test2.JPG"), '4');
@@ -68,5 +72,10 @@ public class MetadataTest {
 
             System.out.format("new rating for '%s': %c", dst, rating);
         }
+    }
+
+    public BufferedImage readEXIFThumbnail(final File src){
+        //TODO
+        return null;
     }
 }
