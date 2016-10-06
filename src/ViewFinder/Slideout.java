@@ -19,6 +19,9 @@ public class Slideout extends VBox {
     private double expandedSize;
     private Pos flapbarLocation;
 
+    private Animation hidePanel;
+    private Animation showPanel;
+
     /**
      * Creates a sidebar panel in a BorderPane, containing an horizontal alignment
      * of the given nodes.
@@ -52,9 +55,9 @@ public class Slideout extends VBox {
         // Add nodes in the vbox
         getChildren().addAll(nodes);
 
-        final Animation hidePanel = new Transition() {
+        hidePanel = new Transition() {
             {
-                setCycleDuration(Duration.millis(250));
+                setCycleDuration(Duration.millis(300));
             }
 
             @Override
@@ -72,9 +75,9 @@ public class Slideout extends VBox {
         });
 
         // Create an animation to show the panel.
-        final Animation showPanel = new Transition() {
+        showPanel = new Transition() {
             {
-                setCycleDuration(Duration.millis(250));
+                setCycleDuration(Duration.millis(300));
             }
 
             @Override
@@ -89,10 +92,10 @@ public class Slideout extends VBox {
             public void handle(ActionEvent actionEvent) {
             }
         });
+    }
 
-        if (showPanel.statusProperty().get() == Animation.Status.STOPPED
-                && hidePanel.statusProperty().get() == Animation.Status.STOPPED) {
-
+    public void slideInOut() {
+        if (showPanel.statusProperty().get() == Animation.Status.STOPPED && hidePanel.statusProperty().get() == Animation.Status.STOPPED) {
             if (isVisible()) {
                 hidePanel.play();
 
