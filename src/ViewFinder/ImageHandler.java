@@ -14,10 +14,18 @@ public class ImageHandler {
     protected HashMap<File, Image> images;
     protected HashMap<File, Thread> threads;
 
-    public ImageHandler(File[] files){
+    public ImageHandler(){
         images = new HashMap<File, Image>();
         threads = new HashMap<File, Thread>();
+    }
 
+    public ImageHandler(File[] files){
+        this();
+
+        addAll(files);
+    }
+
+    public void addAll(File[] files){
         for (File file : files){
             images.put(file, null);
             threads.put(file, null);

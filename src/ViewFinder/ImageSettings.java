@@ -1,10 +1,10 @@
 package ViewFinder;
 
-import java.awt.*;
+import javafx.scene.paint.Color;
 
 public class ImageSettings extends Settings {
     public boolean hasFrame;
-    public Color frameColor = new Color(255, 255, 255);
+    public Color frameColor = new Color(1., 1., 1., 1.);
     public int frameSize = 5;
 
 

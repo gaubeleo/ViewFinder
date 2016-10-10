@@ -2,16 +2,16 @@ package ViewFinder;
 
 import javafx.animation.FadeTransition;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -21,7 +21,10 @@ import java.util.Vector;
 
 public class ViewFinder extends Application{
     private final String path = "H:\\Images\\Scotland - Isle of Skye\\fancy";
+    private boolean fullscreen = false;
     private final int preloadCount = 2;
+    private int frameWidth = 3;
+    private final Duration fadeDuration = new Duration(300);
 
     ///////////////////////////
 
@@ -29,11 +32,15 @@ public class ViewFinder extends Application{
 
     ///////////////////////////
 
+    private Settings globalSettings;
     private KeyController keyController;
 
+    private Stage primaryStage;
     private BorderPane slideshowLayout;
     private ImageHandler imageHandler;
 
+    private Rectangle frame;
+    private ImageViewPane imageContainer;
     private ImageView slideshowImage;
     private Slideout settings;
     private Slideout info;
@@ -44,6 +51,15 @@ public class ViewFinder extends Application{
 
     private FadeTransition fadeIn;
     private FadeTransition fadeOutIn;
+    private FadeTransition fadeInFrame;
+    private FadeTransition fadeOutInFrame;
+    private BackgroundHandler backgroundHandler;
+
+    ///////////////////////////
+
+    public final double WHITE = 1.;
+    public final double BLACK = 0.;
+
 
     ///////////////////////////
 
@@ -53,31 +69,21 @@ public class ViewFinder extends Application{
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        this.primaryStage = primaryStage;
         primaryStage.setTitle("ViewFinder - Imagine");
 
+        globalSettings = new Settings(Color.gray(WHITE));
+        keyController = KeyController.singleton(this);
+        imageHandler = new ImageHandler();
         if (!chooseDirectory(new File(path))){
             System.exit(-1);
         }
+        createFrame();
         createSlideshow();
         createAnimations();
 
-        Scene slideshowScene = new Scene(slideshowLayout, Color.GRAY);
-        primaryStage.setScene(slideshowScene);
-
-        // Keyboard Inputs are Handled by KeyController
-
-        keyController = KeyController.singleton(this);
-        slideshowScene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                keyController.manageSlideshow(event);
-            }
-        });
-
-        primaryStage.setMinHeight(400);
-        primaryStage.setMinWidth(400);
-        primaryStage.setMaximized(true);
-        primaryStage.show();
+        //JavaFX Stage/Scene
+        setupScene();
     }
 
     public boolean chooseDirectory(File path){
@@ -101,7 +107,7 @@ public class ViewFinder extends Application{
         for (File file : fileList){
             files.add(file);
         }
-        imageHandler = new ImageHandler(fileList);
+        imageHandler.addAll(fileList);
 
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             imageHandler.preload_threaded(files.get(getRealIndex(index+offset)));
@@ -109,9 +115,18 @@ public class ViewFinder extends Application{
         return true;
     }
 
+    public void createFrame(){
+        frame = new Rectangle();
+
+        frame.setFill(Color.TRANSPARENT);
+        frame.setStroke(Color.gray(BLACK));
+        // +2: weird bug fix on edge between image and frame
+        frame.setStrokeWidth(frameWidth + 2);
+    }
+
     public void createSlideshow(){
         slideshowLayout = new BorderPane();
-        slideshowLayout.setStyle("-fx-background-color: rgb(70, 70, 70);");
+        //slideshowLayout.setStyle("-fx-background-color: #CCFF99;");
 
         // Replace label with Class that inherits from VBox
         Label settingsLabel = new Label("Global Settings");
@@ -128,11 +143,10 @@ public class ViewFinder extends Application{
         slideshowImage.setPreserveRatio(true);
         slideshowImage.setSmooth(true);
         slideshowImage.setImage(imageHandler.get(files.get(index)));
-
         slideshowImage.setCache(true);
         slideshowImage.setCacheHint(CacheHint.SCALE);
 
-        ImageViewPane imageContainer = new ImageViewPane(slideshowImage);
+        imageContainer = new ImageViewPane(slideshowImage);
         imageContainer.setImageView(slideshowImage);
 
         slideshowLayout.setCenter(imageContainer);
@@ -140,24 +154,65 @@ public class ViewFinder extends Application{
         slideshowLayout.setRight(info);
 
         slideshowLayout.setMargin(imageContainer, new Insets(50, 50, 50, 50));
+
+        backgroundHandler = new BackgroundHandler(slideshowLayout, globalSettings.backgroundColor);
     }
 
     public void createAnimations(){
-        fadeIn = new FadeTransition(new Duration(250), slideshowImage);
+        fadeIn = new FadeTransition(fadeDuration, slideshowImage);
         fadeIn.setFromValue(0.0);
         fadeIn.setToValue(1.0);
 
-        fadeOutIn = new FadeTransition(new Duration(250), slideshowImage);
+        fadeOutIn = new FadeTransition(fadeDuration, slideshowImage);
         fadeOutIn.setFromValue(1.0);
         fadeOutIn.setToValue(0.0);
         fadeOutIn.setOnFinished(e -> {
             slideshowImage.setImage(imageHandler.get(files.get(index)));
             fadeIn.play();
         });
+
+        fadeInFrame = new FadeTransition(fadeDuration, frame);
+        fadeInFrame.setFromValue(0.0);
+        fadeInFrame.setToValue(1.0);
+
+        fadeOutInFrame = new FadeTransition(fadeDuration, frame);
+        fadeOutInFrame.setFromValue(1.0);
+        fadeOutInFrame.setToValue(0.0);
+        fadeOutInFrame.setOnFinished(e -> {
+            fadeInFrame.play();
+        });
+
+        backgroundHandler.setAnimationDuration(fadeDuration.multiply(2));
+        backgroundHandler.setOnFinished(e -> {
+            backgroundHandler.transitionFinished();
+        });
+        backgroundHandler.setNextBC(Color.gray(BLACK));
+    }
+
+    public void setupScene(){
+        Scene slideshowScene = new Scene(slideshowLayout);
+        
+        // Keyboard Inputs are Handled by KeyController
+        slideshowScene.setOnKeyPressed(event -> keyController.manageSlideshow(event));
+
+        primaryStage.setMinHeight(400);
+        primaryStage.setMinWidth(400);
+
+        //primaryStage.setFullScreenExitHint("");
+        primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
+        if (!fullscreen)
+            primaryStage.setMaximized(true);
+        else
+            primaryStage.setFullScreen(true);
+
+        primaryStage.setScene(slideshowScene);
+        primaryStage.show();
     }
 
     public void next(){
         fadeOutIn.play();
+        fadeOutInFrame.play();
+        backgroundHandler.play();
         increase_index();
 
         imageHandler.drop(files.get(getRealIndex((index-1)-preloadCount)));
@@ -166,10 +221,38 @@ public class ViewFinder extends Application{
 
     public void previous(){
         fadeOutIn.play();
+        fadeOutInFrame.play();
         reduce_index();
 
         imageHandler.drop(files.get(getRealIndex((index+1)+preloadCount)));
         imageHandler.preload_threaded(files.get(getRealIndex(index-preloadCount)));
+    }
+
+    public void slideInOut(){
+        settings.slideInOut();
+        info.slideInOut();
+    }
+
+    public void addRemoveFrame(){
+        if (imageContainer.isFramed())
+            imageContainer.removeFrame();
+        else{
+            imageContainer.setFrame(frame);
+        }
+    }
+
+    public void toggleFullscreen(){
+        if (!fullscreen)
+            primaryStage.setFullScreen(true);
+        else
+            primaryStage.setFullScreen(false);
+            primaryStage.setMaximized(true);
+        fullscreen = !fullscreen;
+    }
+
+    public void exit(){
+        System.out.println("exiting Viewfinder - Imagine...");
+        System.exit(0);
     }
 
     private void increase_index() {
@@ -184,10 +267,6 @@ public class ViewFinder extends Application{
         index = getRealIndex(index + i);
     }
 
-    public void slideInOut(){
-        settings.slideInOut();
-        info.slideInOut();
-    }
 
     public int getRealIndex(int i) {
         if (i < 0){
