@@ -38,17 +38,20 @@ public class ImageViewPane extends Region {
     @Override
     protected void layoutChildren() {
         ImageView imageView = imageViewProperty.get();
+        int width = even(getWidth());
+        int height = even(getHeight());
+
         if (imageView != null) {
-            imageView.setFitWidth(getWidth());
-            imageView.setFitHeight(getHeight());
-            layoutInArea(imageView, 0, 0, getWidth(), getHeight(), 0, HPos.CENTER, VPos.CENTER);
+            imageView.setFitWidth(width);
+            imageView.setFitHeight(height);
+            layoutInArea(imageView, 0, 0, width, height, 0, HPos.CENTER, VPos.CENTER);
 
             if (isFramed()){
                 double frameSize = frame.getStrokeWidth();
                 // -2: weird bug fix on edge between image and frame
-                frame.setWidth(imageView.getBoundsInParent().getWidth()+frameSize-2);
-                frame.setHeight(imageView.getBoundsInParent().getHeight()+frameSize-2);
-                layoutInArea(frame, 0, 0, getWidth(), getHeight(), 0, HPos.CENTER, VPos.CENTER);
+                frame.setWidth(imageView.getBoundsInParent().getWidth()+frameSize);
+                frame.setHeight(imageView.getBoundsInParent().getHeight()+frameSize);
+                layoutInArea(frame, 0, 0, width, height, 0, HPos.CENTER, VPos.CENTER);
             }
         }
         super.layoutChildren();
@@ -64,5 +67,9 @@ public class ImageViewPane extends Region {
             }
         });
         this.imageViewProperty.set(imageView);
+    }
+
+    public static int even(double x){
+        return ((int)(x/2))*2;
     }
 }

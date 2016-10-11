@@ -3,46 +3,76 @@ package ViewFinder;
 import javafx.animation.Transition;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
-public class BackgroundHandler extends Transition {
+public class BackgroundHandler {
 
-    protected Region region;
-    protected Color currentBC;
-    protected Color nextBC;
+    private Region root;
+    private Rectangle frame;
+    private int frameWidth;
 
-    public BackgroundHandler(Region region) {
-        this.region = region;
+    private Color currentBC;
+    private Color nextBC;
+
+    private Transition fadeBC;
+
+    public BackgroundHandler(Region root) {
+        this.root = root;
     }
 
-    public BackgroundHandler(Region region, Color currentBC) {
-        this(region);
+    public BackgroundHandler(Region root, Color currentBC) {
+        this(root);
         setCurrentBC(currentBC);
     }
 
-    @Override
-    protected void interpolate(double fraction) {
-        Color tempColor = currentBC.interpolate(nextBC, fraction);
-        region.setStyle(String.format("-fx-background-color: #%s;", tempColor.toString().substring(2, 8)));
+    public Rectangle createFrame(int frameWidth){
+        this.frameWidth = frameWidth;
+
+        frame = new Rectangle();
+
+        frame.setFill(Color.TRANSPARENT);
+        frame.setStroke(Color.WHITE);
+        frame.setStrokeWidth(frameWidth);
+
+        return frame;
+    }
+
+    public Transition fadeBackground(Duration duration){
+        final Transition fadeBC = new Transition() {
+            {
+                setCycleDuration(duration);
+            }
+            @Override
+            protected void interpolate(double fraction) {
+                Color tempColor = currentBC.interpolate(nextBC, fraction);
+                root.setStyle(String.format("-fx-background-color: #%s;", tempColor.toString().substring(2, 8)));
+            }
+        };
+        fadeBC.setOnFinished(e -> {
+            transitionFinished();
+        });
+
+        return fadeBC;
     }
 
     public void setCurrentBC(Color currentBC){
         this.currentBC = currentBC;
-        region.setStyle(String.format("-fx-background-color: #%s;", currentBC.toString().substring(2, 8)));
+        root.setStyle(String.format("-fx-background-color: #%s;", currentBC.toString().substring(2, 8)));
     }
 
     public void setNextBC(Color nextBC){
         this.nextBC = nextBC;
     }
 
-    public void transitionFinished(){
-        Color temp = Color.gray(currentBC.getRed());
-
-        setCurrentBC(nextBC);
-        setNextBC(temp);
+    public void adjustFrameColor(){
+        if (nextBC.getRed() > 0.5)
+            frame.setStroke(Color.BLACK);
+        else
+            frame.setStroke(Color.WHITE);
     }
 
-    public void setAnimationDuration(Duration duration){
-        setCycleDuration(duration);
+    public void transitionFinished(){
+        setCurrentBC(nextBC);
     }
 }

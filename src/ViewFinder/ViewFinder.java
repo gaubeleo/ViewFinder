@@ -1,6 +1,7 @@
 package ViewFinder;
 
 import javafx.animation.FadeTransition;
+import javafx.animation.Transition;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,6 +18,7 @@ import javafx.util.Duration;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.Random;
 import java.util.Vector;
 
 public class ViewFinder extends Application{
@@ -24,7 +26,7 @@ public class ViewFinder extends Application{
     private boolean fullscreen = false;
     private final int preloadCount = 2;
     private int frameWidth = 3;
-    private final Duration fadeDuration = new Duration(300);
+    private final Duration fadeDuration = new Duration(800);
 
     ///////////////////////////
 
@@ -38,6 +40,7 @@ public class ViewFinder extends Application{
     private Stage primaryStage;
     private BorderPane slideshowLayout;
     private ImageHandler imageHandler;
+    private BackgroundHandler backgroundHandler;
 
     private Rectangle frame;
     private ImageViewPane imageContainer;
@@ -47,19 +50,16 @@ public class ViewFinder extends Application{
 
     private Vector<File> files;
 
+    private Random random = new Random();
+
     ///////////////////////////
 
     private FadeTransition fadeIn;
     private FadeTransition fadeOutIn;
     private FadeTransition fadeInFrame;
     private FadeTransition fadeOutInFrame;
-    private BackgroundHandler backgroundHandler;
 
-    ///////////////////////////
-
-    public final double WHITE = 1.;
-    public final double BLACK = 0.;
-
+    private Transition fadeBC;
 
     ///////////////////////////
 
@@ -72,13 +72,15 @@ public class ViewFinder extends Application{
         this.primaryStage = primaryStage;
         primaryStage.setTitle("ViewFinder - Imagine");
 
-        globalSettings = new Settings(Color.gray(WHITE));
+        globalSettings = new Settings("Default", Color.gray(0.25));
+        if (!globalSettings.load())
+            globalSettings.save();
+
         keyController = KeyController.singleton(this);
         imageHandler = new ImageHandler();
         if (!chooseDirectory(new File(path))){
             System.exit(-1);
         }
-        createFrame();
         createSlideshow();
         createAnimations();
 
@@ -115,33 +117,23 @@ public class ViewFinder extends Application{
         return true;
     }
 
-    public void createFrame(){
-        frame = new Rectangle();
-
-        frame.setFill(Color.TRANSPARENT);
-        frame.setStroke(Color.gray(BLACK));
-        // +2: weird bug fix on edge between image and frame
-        frame.setStrokeWidth(frameWidth + 2);
-    }
-
     public void createSlideshow(){
         slideshowLayout = new BorderPane();
-        //slideshowLayout.setStyle("-fx-background-color: #CCFF99;");
 
         // Replace label with Class that inherits from VBox
         Label settingsLabel = new Label("Global Settings");
-        settings = new Slideout(300, Pos.BASELINE_LEFT, settingsLabel);
+        settings = new Slideout(200, Pos.BASELINE_LEFT, settingsLabel);
         settings.setStyle("-fx-background-color: rgb(100, 100, 100);");
         settings.setPadding(new Insets(25, 25, 25, 25));
 
         Label infoLabel = new Label("Image Info");
-        info = new Slideout(300, Pos.BASELINE_RIGHT, infoLabel);
+        info = new Slideout(200, Pos.BASELINE_RIGHT, infoLabel);
         info.setStyle("-fx-background-color: rgb(100, 100, 100);");
         info.setPadding(new Insets(25, 25, 25, 25));
 
         slideshowImage = new ImageView();
         slideshowImage.setPreserveRatio(true);
-        slideshowImage.setSmooth(true);
+        //slideshowImage.setSmooth(true);
         slideshowImage.setImage(imageHandler.get(files.get(index)));
         slideshowImage.setCache(true);
         slideshowImage.setCacheHint(CacheHint.SCALE);
@@ -156,6 +148,7 @@ public class ViewFinder extends Application{
         slideshowLayout.setMargin(imageContainer, new Insets(50, 50, 50, 50));
 
         backgroundHandler = new BackgroundHandler(slideshowLayout, globalSettings.backgroundColor);
+        frame = backgroundHandler.createFrame(frameWidth);
     }
 
     public void createAnimations(){
@@ -179,14 +172,11 @@ public class ViewFinder extends Application{
         fadeOutInFrame.setFromValue(1.0);
         fadeOutInFrame.setToValue(0.0);
         fadeOutInFrame.setOnFinished(e -> {
+            backgroundHandler.adjustFrameColor();
             fadeInFrame.play();
         });
 
-        backgroundHandler.setAnimationDuration(fadeDuration.multiply(2));
-        backgroundHandler.setOnFinished(e -> {
-            backgroundHandler.transitionFinished();
-        });
-        backgroundHandler.setNextBC(Color.gray(BLACK));
+        fadeBC = backgroundHandler.fadeBackground(fadeDuration.multiply(2));
     }
 
     public void setupScene(){
@@ -196,10 +186,11 @@ public class ViewFinder extends Application{
         slideshowScene.setOnKeyPressed(event -> keyController.manageSlideshow(event));
 
         primaryStage.setMinHeight(400);
-        primaryStage.setMinWidth(400);
+        primaryStage.setMinWidth(600);
 
         //primaryStage.setFullScreenExitHint("");
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
+
         if (!fullscreen)
             primaryStage.setMaximized(true);
         else
@@ -210,9 +201,10 @@ public class ViewFinder extends Application{
     }
 
     public void next(){
+        backgroundHandler.setNextBC(Color.gray(random.nextDouble()));
         fadeOutIn.play();
         fadeOutInFrame.play();
-        backgroundHandler.play();
+        fadeBC.play();
         increase_index();
 
         imageHandler.drop(files.get(getRealIndex((index-1)-preloadCount)));
