@@ -1,10 +1,12 @@
 package ViewFinder;
 
 import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.util.HashMap;
 import java.util.Vector;
 
@@ -12,24 +14,50 @@ import java.util.Vector;
  * Created by Leo on 05.10.2016.
  */
 public class ImageHandler {
+    private static ImageHandler instance;
+
     protected Vector<File> files;
+    protected HashMap<File, ImageSettings> imageSettings;
     protected HashMap<File, Image> images;
     protected HashMap<File, Thread> threads;
 
-    public ImageHandler(){
-        files = new Vector<File>();
-        images = new HashMap<File, Image>();
-        threads = new HashMap<File, Thread>();
+    private ImageHandler(){
+        clear();
     }
 
-    public ImageHandler(File[] fileArray){
+    private ImageHandler(File[] fileArray){
         this();
         addAll(fileArray);
     }
 
-    private void addAll(File[] fileArray){
+    public static ImageHandler singleton(){
+        if(instance == null)
+            instance = new ImageHandler();
+
+        return instance;
+    }
+
+    public static ImageHandler singleton(File[] fileArray){
+        if(instance == null)
+            instance = new ImageHandler(fileArray);
+        else{
+            instance.clear();
+            instance.addAll(fileArray);
+        }
+        return instance;
+    }
+
+    public void clear(){
+        files = new Vector<File>();
+        imageSettings = new HashMap<File, ImageSettings>();
+        images = new HashMap<File, Image>();
+        threads = new HashMap<File, Thread>();
+    }
+
+    public void addAll(File[] fileArray){
         for (File file : fileArray){
             files.add(file);
+            imageSettings.put(file, new ImageSettings(file.getName(), file.getParent(), Color.gray(0.5)));
             images.put(file, null);
             threads.put(file, null);
         }
@@ -45,6 +73,10 @@ public class ImageHandler {
         }
     }
 
+    public void preload_threaded(int index){
+        preload_threaded(files.get(index));
+    }
+
     public void preload_threaded(File file){
         if (images.get(file) != null)
             return;
@@ -54,6 +86,10 @@ public class ImageHandler {
         });
         threads.put(file, thread);
         thread.start();
+    }
+
+    public void drop(int index){
+        drop(files.get(index));
     }
 
     public void drop(File file){
@@ -82,6 +118,14 @@ public class ImageHandler {
             }
         }
         return images.get(file);
+    }
+
+    public Color getBackgroundColor(int index){
+        return getBackgroundColor(files.get(index));
+    }
+
+    public Color getBackgroundColor(File file){
+        return imageSettings.get(file).backgroundColor;
     }
 
     public int getFileCount(){

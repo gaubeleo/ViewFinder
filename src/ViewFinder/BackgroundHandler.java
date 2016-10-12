@@ -10,7 +10,6 @@ public class BackgroundHandler {
 
     private Region root;
     private Rectangle frame;
-    private int frameWidth;
 
     private Color currentBC;
     private Color nextBC;
@@ -18,18 +17,16 @@ public class BackgroundHandler {
     private Transition fadeBC;
 
     public BackgroundHandler(Region root) {
-        this.root = root;
+        this(root, Color.gray(0.3));
     }
 
     public BackgroundHandler(Region root, Color currentBC) {
-        this(root);
+        this.root = root;
         setCurrentBC(currentBC);
     }
 
     public Rectangle createFrame(int frameWidth){
-        this.frameWidth = frameWidth;
-
-        frame = new Rectangle();
+        this.frame = new Rectangle();
 
         frame.setFill(Color.TRANSPARENT);
         frame.setStroke(Color.WHITE);

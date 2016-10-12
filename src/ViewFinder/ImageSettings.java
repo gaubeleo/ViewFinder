@@ -33,6 +33,7 @@ public class ImageSettings extends Settings {
         this.fileName = fileName;
     }
 
+    @Override
     public boolean save(){
         File dir = file.getParentFile();
         if (!dir.exists()){
@@ -50,6 +51,7 @@ public class ImageSettings extends Settings {
         return true;
     }
 
+    @Override
     public boolean load(){
         if (!file.isFile())
             return false;
