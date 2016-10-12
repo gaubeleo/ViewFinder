@@ -8,7 +8,7 @@ public class SettingsPanel extends Slideout{
     private static SettingsPanel instance;
 
     private SettingsPanel(){
-        super(200, Pos.BASELINE_CENTER, new Label("Settings"));
+        super(300, Pos.BASELINE_LEFT, new Label("Settings"));
         setStyle("-fx-background-color: rgb(100, 100, 100);");
         setPadding(new Insets(25, 25, 25, 25));
     }

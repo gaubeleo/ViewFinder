@@ -9,7 +9,7 @@ public class InfoPanel extends Slideout{
     private static InfoPanel instance;
 
     private InfoPanel(){
-        super(200, Pos.BASELINE_CENTER, new Label("Settings"));
+        super(300, Pos.BASELINE_RIGHT, new Label("Info"));
         setStyle("-fx-background-color: rgb(100, 100, 100);");
         setPadding(new Insets(25, 25, 25, 25));
     }

@@ -55,7 +55,8 @@ public class ViewFinder extends Application {
 
         switch(globalSettings.getOnStartAction()){
             case "Default":
-                switchToStartScreen();
+                //switchToStartScreen();
+                switchToSlideshow();
                 break;
             case "Open":
                 //open(globalSettings.getDefaultProject());
@@ -89,7 +90,7 @@ public class ViewFinder extends Application {
         currentLayout = startScreenLayout;
         currentScene = startScreenScene;
         switchToLayout();
-        slideshowScene.setOnKeyPressed(event -> keyController.handleStartScreen(event));
+        startScreenScene.setOnKeyPressed(event -> keyController.handleStartScreen(event));
     }
 
     public void switchToSlideshow(){

@@ -98,6 +98,8 @@ public class ImageHandler {
     }
 
     public Image get(int index){
+        if (index >= getFileCount())
+            return null;
         return get(files.get(index));
     }
 

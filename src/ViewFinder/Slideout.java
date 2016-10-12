@@ -57,7 +57,7 @@ public class Slideout extends VBox {
 
         hidePanel = new Transition() {
             {
-                setCycleDuration(Duration.millis(300));
+                setCycleDuration(Duration.millis(400));
             }
 
             @Override
@@ -67,17 +67,12 @@ public class Slideout extends VBox {
             }
         };
 
-        hidePanel.onFinishedProperty().set(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                setVisible(false);
-            }
-        });
+        hidePanel.onFinishedProperty().set(actionEvent -> setVisible(false));
 
         // Create an animation to show the panel.
         showPanel = new Transition() {
             {
-                setCycleDuration(Duration.millis(300));
+                setCycleDuration(Duration.millis(400));
             }
 
             @Override
@@ -87,10 +82,7 @@ public class Slideout extends VBox {
             }
         };
 
-        showPanel.onFinishedProperty().set(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-            }
+        showPanel.onFinishedProperty().set(actionEvent -> {
         });
     }
 

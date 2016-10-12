@@ -57,9 +57,9 @@ public class Slideshow extends BorderPane {
 
         // Layout Components
         ImageView slideshowImage = new ImageView();
+        slideshowImage.setImage(imageHandler.get(index));
         slideshowImage.setPreserveRatio(true);
         slideshowImage.setSmooth(true);
-        slideshowImage.setImage(imageHandler.get(index));
         slideshowImage.setCache(true);
         slideshowImage.setCacheHint(CacheHint.SCALE);
 
