@@ -31,39 +31,37 @@ public class ViewFinder extends Application{
 
     ///////////////////////////
 
-    private int index = 0;
+    //private int index = 0;
 
     ///////////////////////////
+    private Stage primaryStage;
 
     private Settings globalSettings;
     private KeyController keyController;
 
-    private Stage primaryStage;
-    private BorderPane startLayout;
-    private BorderPane slideshowLayout;
-    private BorderPane galleryLayout;
-    private ImageHandler imageHandler;
-    private BackgroundHandler backgroundHandler;
+    //private BorderPane startLayout;
+    //private BorderPane slideshowLayout;
+    //private BorderPane galleryLayout;
+    //private ImageHandler imageHandler;
+    //private BackgroundHandler backgroundHandler;
 
-    private VBox welcomeScreen;
-    private Rectangle frame;
-    private ImageViewPane imageContainer;
-    private ImageView slideshowImage;
-    private Slideout settings;
-    private Slideout info;
-
-    private Vector<File> files;
+    //private VBox welcomeScreen;
+    //private Rectangle frame;
+    //private ImageViewPane imageContainer;
+    //private ImageView slideshowImage;
+    //private Slideout settings;
+    //private Slideout info;
 
     private Random random = new Random();
 
     ///////////////////////////
 
-    private FadeTransition fadeIn;
-    private FadeTransition fadeOutIn;
-    private FadeTransition fadeInFrame;
-    private FadeTransition fadeOutInFrame;
+    //private FadeTransition fadeIn;
+    //private FadeTransition fadeOutIn;
+    //private FadeTransition fadeInFrame;
+    //private FadeTransition fadeOutInFrame;
 
-    private Transition fadeBC;
+    //private Transition fadeBC;
 
     ///////////////////////////
 
@@ -142,53 +140,6 @@ public class ViewFinder extends Application{
         startLayout.setRight(info);
 
         startLayout.setMargin(welcomeScreen, new Insets(100, 100, 100, 100));
-    }
-
-    public void createSlideshow(){
-        slideshowLayout = new BorderPane();
-
-        createSettingsPanel();
-        createInfoPanel();
-
-        slideshowImage = new ImageView();
-        slideshowImage.setPreserveRatio(true);
-        slideshowImage.setSmooth(true);
-        slideshowImage.setImage(imageHandler.get(files.get(index)));
-        slideshowImage.setCache(true);
-        slideshowImage.setCacheHint(CacheHint.SCALE);
-
-        imageContainer = new ImageViewPane(slideshowImage);
-        imageContainer.setImageView(slideshowImage);
-
-        slideshowLayout.setCenter(imageContainer);
-        slideshowLayout.setLeft(settings);
-        slideshowLayout.setRight(info);
-
-        slideshowLayout.setMargin(imageContainer, new Insets(50, 50, 50, 50));
-
-        backgroundHandler = new BackgroundHandler(slideshowLayout, globalSettings.backgroundColor);
-        frame = backgroundHandler.createFrame(frameWidth);
-    }
-
-    public void createInfoPanel(){
-        if (info != null)
-            return;
-
-        Label infoLabel = new Label("Image Info");
-        info = new Slideout(200, Pos.BASELINE_RIGHT, infoLabel);
-        info.setStyle("-fx-background-color: rgb(100, 100, 100);");
-        info.setPadding(new Insets(25, 25, 25, 25));
-    }
-
-    public void createSettingsPanel(){
-        if (settings != null)
-            return;
-
-        // Replace label with Class that inherits from VBox
-        Label settingsLabel = new Label("Global Settings");
-        settings = new Slideout(200, Pos.BASELINE_LEFT, settingsLabel);
-        settings.setStyle("-fx-background-color: rgb(100, 100, 100);");
-        settings.setPadding(new Insets(25, 25, 25, 25));
     }
 
     public void createAnimations(){
@@ -287,26 +238,3 @@ public class ViewFinder extends Application{
         System.exit(0);
     }
 
-    private void increase_index() {
-        change_index(1);
-    }
-
-    private void reduce_index() {
-        change_index(-1);
-    }
-
-    private void change_index(int i) {
-        index = getRealIndex(index + i);
-    }
-
-
-    public int getRealIndex(int i) {
-        if (i < 0){
-            return files.size()+i;
-        }
-        else if (i >= files.size()){
-            return i-files.size();
-        }
-        return i;
-    }
-}

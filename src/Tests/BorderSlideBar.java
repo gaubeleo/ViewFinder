@@ -14,9 +14,9 @@ import javafx.util.Duration;
  * Animates a node on and off screen to the top, right, bottom or left side.
  */
 public class BorderSlideBar extends VBox {
-    private final String CSS = "/" + this.getClass().getSimpleName() + ".css";
-    private double expandedSize;
-    private Pos flapbarLocation;
+    protected final String CSS = "/" + this.getClass().getSimpleName() + ".css";
+    protected double expandedSize;
+    protected Pos flapbarLocation;
 
     /**
      * Creates a sidebar panel in a BorderPane, containing an horizontal alignment
@@ -116,7 +116,7 @@ public class BorderSlideBar extends VBox {
     /**
      * Initialize position orientation.
      */
-    private void initPosition() {
+    protected void initPosition() {
         switch (flapbarLocation) {
             case TOP_LEFT:
                 setPrefHeight(0);
@@ -142,7 +142,7 @@ public class BorderSlideBar extends VBox {
      *
      * @param size
      */
-    private void translateByPos(double size) {
+    protected void translateByPos(double size) {
         switch (flapbarLocation) {
             case TOP_LEFT:
                 setPrefHeight(size);

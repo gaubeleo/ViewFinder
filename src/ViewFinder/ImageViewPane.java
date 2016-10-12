@@ -48,7 +48,6 @@ public class ImageViewPane extends Region {
 
             if (isFramed()){
                 double frameSize = frame.getStrokeWidth();
-                // -2: weird bug fix on edge between image and frame
                 frame.setWidth(imageView.getBoundsInParent().getWidth()+frameSize);
                 frame.setHeight(imageView.getBoundsInParent().getHeight()+frameSize);
                 layoutInArea(frame, 0, 0, width, height, 0, HPos.CENTER, VPos.CENTER);
