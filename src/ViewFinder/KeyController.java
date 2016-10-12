@@ -18,16 +18,31 @@ public class KeyController {
 
     public void manageSlideshow(KeyEvent event) {
         switch (event.getCode()) {
-            case ESCAPE:    vf.exit();              break;
-            case F5:        vf.toggleFullscreen();  break;
+            case ESCAPE:
+                vf.exit();
+                break;
+            case F5:
+                vf.toggleFullscreen();
+                break;
 
-            case UP:                                break;
-            case DOWN:                              break;
-            case LEFT:      vf.previous();          break;
-            case RIGHT:     vf.next();              break;
+            case LEFT:
+                vf.previous();
+                break;
+            case RIGHT:
+                vf.next();
+                break;
 
-            case I:         vf.slideInOut();        break;
-            case F:         vf.addRemoveFrame();    break;
+            case I:
+                vf.slideInOut();
+                break;
+            case F:
+                vf.addRemoveFrame();
+                break;
+            case O:
+                if (event.isControlDown())
+
+                    //vf.openProject();
+                break;
         }
     }
 }

@@ -11,6 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -38,10 +39,13 @@ public class ViewFinder extends Application{
     private KeyController keyController;
 
     private Stage primaryStage;
+    private BorderPane startLayout;
     private BorderPane slideshowLayout;
+    private BorderPane galleryLayout;
     private ImageHandler imageHandler;
     private BackgroundHandler backgroundHandler;
 
+    private VBox welcomeScreen;
     private Rectangle frame;
     private ImageViewPane imageContainer;
     private ImageView slideshowImage;
@@ -81,8 +85,9 @@ public class ViewFinder extends Application{
         if (!chooseDirectory(new File(path))){
             System.exit(-1);
         }
-        createSlideshow();
-        createAnimations();
+        createStartScreen();
+        //createSlideshow();
+        //createAnimations();
 
         //JavaFX Stage/Scene
         setupScene();
@@ -117,23 +122,37 @@ public class ViewFinder extends Application{
         return true;
     }
 
+    public void createStartScreen(){
+        startLayout = new BorderPane();
+
+        createSettingsPanel();
+        createInfoPanel();
+
+        welcomeScreen = new VBox();
+
+        Label headline = new Label("Viewfinder - Imagine");
+        Label[] shortcuts = {new Label("Press Ctrl + N to start a new project"), new Label("Press Ctrl + O to open an existing project")};
+
+
+        welcomeScreen.getChildren().add(headline);
+        welcomeScreen.getChildren().addAll(shortcuts);
+
+        startLayout.setCenter(welcomeScreen);
+        startLayout.setLeft(settings);
+        startLayout.setRight(info);
+
+        startLayout.setMargin(welcomeScreen, new Insets(100, 100, 100, 100));
+    }
+
     public void createSlideshow(){
         slideshowLayout = new BorderPane();
 
-        // Replace label with Class that inherits from VBox
-        Label settingsLabel = new Label("Global Settings");
-        settings = new Slideout(200, Pos.BASELINE_LEFT, settingsLabel);
-        settings.setStyle("-fx-background-color: rgb(100, 100, 100);");
-        settings.setPadding(new Insets(25, 25, 25, 25));
-
-        Label infoLabel = new Label("Image Info");
-        info = new Slideout(200, Pos.BASELINE_RIGHT, infoLabel);
-        info.setStyle("-fx-background-color: rgb(100, 100, 100);");
-        info.setPadding(new Insets(25, 25, 25, 25));
+        createSettingsPanel();
+        createInfoPanel();
 
         slideshowImage = new ImageView();
         slideshowImage.setPreserveRatio(true);
-        //slideshowImage.setSmooth(true);
+        slideshowImage.setSmooth(true);
         slideshowImage.setImage(imageHandler.get(files.get(index)));
         slideshowImage.setCache(true);
         slideshowImage.setCacheHint(CacheHint.SCALE);
@@ -149,6 +168,27 @@ public class ViewFinder extends Application{
 
         backgroundHandler = new BackgroundHandler(slideshowLayout, globalSettings.backgroundColor);
         frame = backgroundHandler.createFrame(frameWidth);
+    }
+
+    public void createInfoPanel(){
+        if (info != null)
+            return;
+
+        Label infoLabel = new Label("Image Info");
+        info = new Slideout(200, Pos.BASELINE_RIGHT, infoLabel);
+        info.setStyle("-fx-background-color: rgb(100, 100, 100);");
+        info.setPadding(new Insets(25, 25, 25, 25));
+    }
+
+    public void createSettingsPanel(){
+        if (settings != null)
+            return;
+
+        // Replace label with Class that inherits from VBox
+        Label settingsLabel = new Label("Global Settings");
+        settings = new Slideout(200, Pos.BASELINE_LEFT, settingsLabel);
+        settings.setStyle("-fx-background-color: rgb(100, 100, 100);");
+        settings.setPadding(new Insets(25, 25, 25, 25));
     }
 
     public void createAnimations(){
@@ -180,7 +220,7 @@ public class ViewFinder extends Application{
     }
 
     public void setupScene(){
-        Scene slideshowScene = new Scene(slideshowLayout);
+        Scene slideshowScene = new Scene(startLayout);
         
         // Keyboard Inputs are Handled by KeyController
         slideshowScene.setOnKeyPressed(event -> keyController.manageSlideshow(event));
