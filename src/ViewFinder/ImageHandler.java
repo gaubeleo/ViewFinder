@@ -63,7 +63,11 @@ public class ImageHandler {
         }
     }
 
-    private void preload(File file){
+    public void preload(int index){
+        preload(files.get(index));
+    }
+
+    public void preload(File file){
         try {
             images.put(file, new Image(new FileInputStream(file)));
         } catch (FileNotFoundException e) {

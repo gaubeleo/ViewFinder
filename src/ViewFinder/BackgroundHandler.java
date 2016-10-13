@@ -29,8 +29,10 @@ public class BackgroundHandler {
         this.frame = new Rectangle();
 
         frame.setFill(Color.TRANSPARENT);
-        frame.setStroke(Color.WHITE);
         frame.setStrokeWidth(frameWidth);
+
+        frame.setStroke(Color.WHITE);
+        //adjustFrameColor();
 
         return frame;
     }

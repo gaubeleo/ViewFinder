@@ -28,7 +28,7 @@ public class Slideshow extends BorderPane {
 
     ////////////////////////////////////
 
-    private FadeTransition fadeIn;
+    private FadeTransition imageFadeIn;
     private FadeTransition imageFade;
     private FadeTransition fadeInFrame;
     private FadeTransition frameFade;
@@ -56,16 +56,16 @@ public class Slideshow extends BorderPane {
         frame = backgroundHandler.createFrame(globalSettings.frameSize);
 
         // Layout Components
-        ImageView slideshowImage = new ImageView();
-        slideshowImage.setImage(imageHandler.get(index));
-        slideshowImage.setPreserveRatio(true);
-        slideshowImage.setSmooth(true);
-        slideshowImage.setCache(true);
-        slideshowImage.setCacheHint(CacheHint.SCALE);
+        image = new ImageView();
+        image.setImage(imageHandler.get(index));
+        image.setPreserveRatio(true);
+        image.setSmooth(true);
+        image.setCache(true);
+        image.setCacheHint(CacheHint.SCALE);
 
-        imageContainer = new ImageViewPane(slideshowImage);
-        imageContainer.setImageView(slideshowImage);
-        imageContainer.setFrame(backgroundHandler.createFrame(globalSettings.frameSize));
+        imageContainer = new ImageViewPane(image);
+        imageContainer.setImageView(image);
+        imageContainer.setFrame(frame);
 
         settings = SettingsPanel.singleton();
         info = InfoPanel.singleton();
@@ -83,16 +83,16 @@ public class Slideshow extends BorderPane {
     public void createAnimations(){
         Duration duration = globalSettings.getFadeDuration();
 
-        fadeIn = new FadeTransition(duration, image);
-        fadeIn.setFromValue(0.0);
-        fadeIn.setToValue(1.0);
+        imageFadeIn = new FadeTransition(duration, image);
+        imageFadeIn.setFromValue(0.0);
+        imageFadeIn.setToValue(1.0);
 
         imageFade = new FadeTransition(duration, image);
         imageFade.setFromValue(1.0);
         imageFade.setToValue(0.0);
         imageFade.setOnFinished(e -> {
             image.setImage(imageHandler.get(index));
-            fadeIn.play();
+            imageFadeIn.play();
         });
 
         fadeInFrame = new FadeTransition(duration, frame);
@@ -110,6 +110,9 @@ public class Slideshow extends BorderPane {
         backgroundFade = backgroundHandler.fadeBackground(duration.multiply(2));
     }
 
+    public boolean chooseDirectory(String path){
+        return chooseDirectory(new File(path));
+    }
 
     public boolean chooseDirectory(File path){
         final File[] fileList = path.listFiles(new FilenameFilter() {
@@ -129,7 +132,12 @@ public class Slideshow extends BorderPane {
 
         imageHandler.addAll(fileList);
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
-            imageHandler.preload_threaded(getRealIndex(index+offset));
+            if (offset == 0){
+                imageHandler.preload(getRealIndex(index));
+                image.setImage(imageHandler.get(index));
+            }
+            else
+                imageHandler.preload_threaded(getRealIndex(index+offset));
         }
         return true;
     }
@@ -149,8 +157,12 @@ public class Slideshow extends BorderPane {
     }
 
     public void previous(){
+        backgroundHandler.setNextBC(imageHandler.getBackgroundColor(getRealIndex(index-1)));
+
         imageFade.play();
         frameFade.play();
+        backgroundFade.play();
+
         reduce_index();
 
         imageHandler.drop(getRealIndex((index+1)+preloadCount));

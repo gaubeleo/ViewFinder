@@ -45,7 +45,7 @@ public class ImageViewPane extends Region {
             imageView.setFitHeight(height);
             layoutInArea(imageView, 0, 0, width, height, 0, HPos.CENTER, VPos.CENTER);
 
-            if (frame != null){
+            if (frame != null && frame.isVisible()){
                 double frameSize = frame.getStrokeWidth();
                 frame.setWidth(imageView.getBoundsInParent().getWidth()+frameSize);
                 frame.setHeight(imageView.getBoundsInParent().getHeight()+frameSize);

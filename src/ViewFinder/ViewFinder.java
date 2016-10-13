@@ -7,19 +7,10 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
+
 
 public class ViewFinder extends Application {
-    private final String path = "H:\\Images\\Scotland - Isle of Skye\\fancy";
-    private boolean fullscreen = false;
-    private final int preloadCount = 2;
-    private int frameWidth = 3;
-    private final Duration fadeDuration = new Duration(800);
-
-    ///////////////////////////
-
-    //private int index = 0;
-
-    ///////////////////////////
     private Stage primaryStage;
     private Scene currentScene;
     private Pane currentLayout;
@@ -33,6 +24,7 @@ public class ViewFinder extends Application {
     private Gallery galleryLayout;
 
     private GlobalSettings globalSettings;
+    private FileChooser fileChooser;
     private KeyController keyController;
     private ImageHandler imageHandler;
 
@@ -49,14 +41,15 @@ public class ViewFinder extends Application {
         if (!globalSettings.load())
             globalSettings.save();
 
+        fileChooser = new FileChooser();
         imageHandler = ImageHandler.singleton();
         keyController = KeyController.singleton(this);
         setupStage();
 
         switch(globalSettings.getOnStartAction()){
             case "Default":
-                //switchToStartScreen();
-                switchToSlideshow();
+                switchToStartScreen();
+                //switchToSlideshow();
                 break;
             case "Open":
                 //open(globalSettings.getDefaultProject());
@@ -72,7 +65,7 @@ public class ViewFinder extends Application {
         primaryStage.setFullScreenExitHint("");
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
 
-        if (!fullscreen)
+        if (!globalSettings.fullscreen)
             primaryStage.setMaximized(true);
         else
             primaryStage.setFullScreen(true);
@@ -97,6 +90,7 @@ public class ViewFinder extends Application {
         if (slideshowScene == null){
             slideshowLayout = new Slideshow(globalSettings, imageHandler);
             slideshowLayout.create();
+            slideshowLayout.chooseDirectory(globalSettings.path);
             slideshowScene = new Scene(slideshowLayout);
 
             keyController.setSlideshow(slideshowLayout);
@@ -113,13 +107,27 @@ public class ViewFinder extends Application {
         primaryStage.show();
     }
 
+    public void newProject(){
+        File selectedDirectory = fileChooser.chooseImageFolder();
+        String ProjectName = fileChooser.chooseProjectName(selectedDirectory.getName());
+
+        if (selectedDirectory != null){
+            switchToSlideshow();
+            //switchToGallery();
+        }
+    }
+
+    public void openProject(){
+
+    }
+
     public void toggleFullscreen(){
-        if (!fullscreen)
+        if (!globalSettings.fullscreen)
             primaryStage.setFullScreen(true);
         else
             primaryStage.setFullScreen(false);
             primaryStage.setMaximized(true);
-        fullscreen = !fullscreen;
+        globalSettings.setFullscreen(!globalSettings.fullscreen);
     }
 
     public void exit(){

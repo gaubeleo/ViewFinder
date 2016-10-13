@@ -28,6 +28,16 @@ public class KeyController {
             case F5:
                 vf.toggleFullscreen();
                 break;
+
+            case N:
+                if (e.isControlDown())
+                    vf.newProject();
+                break;
+
+            case O:
+                if (e.isControlDown())
+                    vf.openProject();
+                break;
         }
     }
 
