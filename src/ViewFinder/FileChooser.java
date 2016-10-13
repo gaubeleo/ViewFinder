@@ -1,5 +1,6 @@
 package ViewFinder;
 
+import javafx.scene.control.Alert;
 import javafx.scene.control.TextInputDialog;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -37,5 +38,14 @@ public class FileChooser extends Stage {
             input = result.get();
         }
         return input;
+    }
+
+    public void allertNoImages(){
+        Alert dialog = new Alert(Alert.AlertType.WARNING);
+        dialog.setTitle("Warning");
+        dialog.setHeaderText(null);
+        dialog.setContentText("This Directory does not contain any images!");
+
+        dialog.showAndWait();
     }
 }

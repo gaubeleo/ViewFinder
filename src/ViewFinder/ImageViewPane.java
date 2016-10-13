@@ -17,6 +17,22 @@ public class ImageViewPane extends Region {
     private ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<ImageView>();
     private Rectangle frame;
 
+    public ImageViewPane() {
+        imageViewProperty.addListener((arg0, oldIV, newIV) -> {
+            if (oldIV != null) {
+                getChildren().remove(oldIV);
+            }
+            if (newIV != null) {
+                getChildren().add(newIV);
+            }
+        });
+    }
+
+    public ImageViewPane(ImageView imageView){
+        this();
+        setImageView(imageView);
+    }
+
     public void setFrame(Rectangle frame){
         this.frame = frame;
         getChildren().add(frame);
@@ -31,12 +47,13 @@ public class ImageViewPane extends Region {
     }
 
     public void setImageView(ImageView imageView) {
-        this.imageViewProperty.set(imageView);
+        imageViewProperty.set(imageView);
     }
 
     @Override
     protected void layoutChildren() {
         ImageView imageView = imageViewProperty.get();
+
         int width = even(getWidth());
         int height = even(getHeight());
 
@@ -53,18 +70,6 @@ public class ImageViewPane extends Region {
             }
         }
         super.layoutChildren();
-    }
-
-    public ImageViewPane(ImageView imageView) {
-        imageViewProperty.addListener((arg0, oldIV, newIV) -> {
-            if (oldIV != null) {
-                getChildren().remove(oldIV);
-            }
-            if (newIV != null) {
-                getChildren().add(newIV);
-            }
-        });
-        this.imageViewProperty.set(imageView);
     }
 
     public static int even(double x){

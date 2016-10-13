@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -20,6 +21,8 @@ public class ImageHandler {
     protected HashMap<File, ImageSettings> imageSettings;
     protected HashMap<File, Image> images;
     protected HashMap<File, Thread> threads;
+
+    private Random random = new Random();
 
     private ImageHandler(){
         clear();
@@ -52,15 +55,48 @@ public class ImageHandler {
         imageSettings = new HashMap<File, ImageSettings>();
         images = new HashMap<File, Image>();
         threads = new HashMap<File, Thread>();
+
+        System.gc();
     }
 
     public void addAll(File[] fileArray){
         for (File file : fileArray){
             files.add(file);
-            imageSettings.put(file, new ImageSettings(file.getName(), file.getParent(), Color.gray(0.5)));
+            imageSettings.put(file, new ImageSettings(file.getName(), file.getParent(), Color.gray(random.nextDouble())));
             images.put(file, null);
             threads.put(file, null);
         }
+    }
+
+    public void setFiles(File[] fileArray){
+        clear();
+        addAll(fileArray);
+
+        //TEMP
+        preload_threaded(0);
+    }
+
+    public boolean chooseDirectory(File path){
+        // will not change any files if not successful
+
+        final File[] fileList = path.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".jpg");
+            }
+        });
+
+        if (fileList == null){
+            System.out.format("'%s' is not a valid path!", path);
+            return false;
+        }
+        else if (fileList.length == 0){
+            System.out.format("'%s' contains no .jpg images!", path);
+            return false;
+        }
+
+        setFiles(fileList);
+
+        return true;
     }
 
     public void preload(int index){
@@ -68,6 +104,9 @@ public class ImageHandler {
     }
 
     public void preload(File file){
+        if (images.get(file) != null && threads.get(file) != null)
+            return;
+
         try {
             images.put(file, new Image(new FileInputStream(file)));
         } catch (FileNotFoundException e) {
@@ -82,11 +121,12 @@ public class ImageHandler {
     }
 
     public void preload_threaded(File file){
-        if (images.get(file) != null)
+        if (images.get(file) != null && threads.get(file) != null)
             return;
 
         Thread thread = new Thread(() -> {
             preload(file);
+            threads.put(file, null);
         });
         threads.put(file, thread);
         thread.start();
@@ -98,6 +138,7 @@ public class ImageHandler {
 
     public void drop(File file){
         images.replace(file, null);
+        threads.replace(file, null);
         System.gc();
     }
 
@@ -112,7 +153,7 @@ public class ImageHandler {
 
         if (images.get(file) == null){
             if (threads.get(file) == null){
-                System.out.println("Image Preloading does not work efficiently!");
+                System.out.println("Image Preloading does not work correctly!");
                 preload(file);
                 return images.get(file);
             }

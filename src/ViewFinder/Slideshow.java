@@ -60,10 +60,10 @@ public class Slideshow extends BorderPane {
         image.setImage(imageHandler.get(index));
         image.setPreserveRatio(true);
         image.setSmooth(true);
-        image.setCache(true);
-        image.setCacheHint(CacheHint.SCALE);
+        //image.setCache(true);
+        //image.setCacheHint(CacheHint.QUALITY);
 
-        imageContainer = new ImageViewPane(image);
+        imageContainer = new ImageViewPane();
         imageContainer.setImageView(image);
         imageContainer.setFrame(frame);
 
@@ -81,7 +81,7 @@ public class Slideshow extends BorderPane {
     }
 
     public void createAnimations(){
-        Duration duration = globalSettings.getFadeDuration();
+        Duration duration = globalSettings.fadeDuration;
 
         imageFadeIn = new FadeTransition(duration, image);
         imageFadeIn.setFromValue(0.0);
@@ -110,27 +110,15 @@ public class Slideshow extends BorderPane {
         backgroundFade = backgroundHandler.fadeBackground(duration.multiply(2));
     }
 
-    public boolean chooseDirectory(String path){
-        return chooseDirectory(new File(path));
+    public void resetIndex(){
+        index = 0;
     }
 
-    public boolean chooseDirectory(File path){
-        final File[] fileList = path.listFiles(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.toLowerCase().endsWith(".jpg");
-            }
-        });
+    public boolean preload(String path){
+        return preload();
+    }
 
-        if (fileList == null){
-            System.out.format("'%s' is not a valid path!", path);
-            return false;
-        }
-        else if (fileList.length == 0){
-            System.out.format("'%s' contains no .jpg images!", path);
-            return false;
-        }
-
-        imageHandler.addAll(fileList);
+    public boolean preload(){
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             if (offset == 0){
                 imageHandler.preload(getRealIndex(index));

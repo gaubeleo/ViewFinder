@@ -46,8 +46,9 @@ public class ViewFinder extends Application {
         keyController = KeyController.singleton(this);
         setupStage();
 
-        switch(globalSettings.getOnStartAction()){
+        switch(globalSettings.onStartAction){
             case "Default":
+                //newProject();
                 switchToStartScreen();
                 //switchToSlideshow();
                 break;
@@ -69,6 +70,8 @@ public class ViewFinder extends Application {
             primaryStage.setMaximized(true);
         else
             primaryStage.setFullScreen(true);
+
+        primaryStage.setOnCloseRequest(e -> exit());
     }
 
 
@@ -77,9 +80,9 @@ public class ViewFinder extends Application {
             startScreenLayout = new StartScreen();
             startScreenLayout.create();
             startScreenScene = new Scene(startScreenLayout);
-
-            keyController.setStartScreen(startScreenLayout);
         }
+        keyController.setStartScreen(startScreenLayout);
+
         currentLayout = startScreenLayout;
         currentScene = startScreenScene;
         switchToLayout();
@@ -90,30 +93,49 @@ public class ViewFinder extends Application {
         if (slideshowScene == null){
             slideshowLayout = new Slideshow(globalSettings, imageHandler);
             slideshowLayout.create();
-            slideshowLayout.chooseDirectory(globalSettings.path);
             slideshowScene = new Scene(slideshowLayout);
-
-            keyController.setSlideshow(slideshowLayout);
         }
+        slideshowLayout.resetIndex();
+        slideshowLayout.preload();
+        keyController.setSlideshow(slideshowLayout);
+
         currentLayout = slideshowLayout;
         currentScene = slideshowScene;
         switchToLayout();
+
         slideshowScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
     }
 
     // create a smoother transition between scenes...
     private void switchToLayout(){
         primaryStage.setScene(currentScene);
-        primaryStage.show();
+        if (!primaryStage.isShowing())
+            primaryStage.show();
+        if (primaryStage.isIconified())
+            primaryStage.setIconified(false);
     }
 
     public void newProject(){
-        File selectedDirectory = fileChooser.chooseImageFolder();
-        String ProjectName = fileChooser.chooseProjectName(selectedDirectory.getName());
+        primaryStage.setIconified(true);
 
-        if (selectedDirectory != null){
+        File imagePath = fileChooser.chooseImageFolder();
+        if (imagePath == null)
+            return;
+
+        if (!imageHandler.chooseDirectory(imagePath)) {
+            fileChooser.allertNoImages();
+            return;
+        }
+
+        String projectName = fileChooser.chooseProjectName(imagePath.getName());
+
+        if (!projectName.equals("")){
+            System.out.println("creating new Project: "+projectName);
+            globalSettings.newProject(projectName, imagePath);
+
             switchToSlideshow();
             //switchToGallery();
+
         }
     }
 
@@ -127,11 +149,11 @@ public class ViewFinder extends Application {
         else
             primaryStage.setFullScreen(false);
             primaryStage.setMaximized(true);
-        globalSettings.setFullscreen(!globalSettings.fullscreen);
+        globalSettings.fullscreen = !globalSettings.fullscreen;
     }
 
     public void exit(){
-        System.out.println("exiting Viewfinder - Imagine...");
+        System.out.println("\nexiting Viewfinder - Imagine");
         System.exit(0);
     }
 }
