@@ -9,9 +9,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
-import java.io.File;
-import java.io.FilenameFilter;
-
 public class Slideshow extends BorderPane {
     private final GlobalSettings globalSettings;
     private final ImageHandler imageHandler;

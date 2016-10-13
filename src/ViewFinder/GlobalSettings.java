@@ -3,37 +3,35 @@ package ViewFinder;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
-public class GlobalSettings extends Settings{
+public class GlobalSettings extends ImageSettings{
     private static GlobalSettings instance;
 
-    public File imagePath;
     public boolean fullscreen;
+
+    public File imagePath;
     public int preloadCount;
     public String onStartAction;
 
     public Color backgroundColor;
     public Color panelColor;
-    public Color frameColor;
-
-    public int frameSize;
 
     public Duration fadeDuration;
     private GlobalSettings(String projectName) {
         super("GlobalSettings", projectName);
 
-        imagePath = new File("H:\\Images\\Scotland - Isle ofSkye\\fancy");
         fullscreen = false;
+
+        imagePath = new File("H:\\Images\\Scotland - Isle ofSkye\\fancy");
         preloadCount = 2;
         onStartAction = "Default";
 
-        backgroundColor = Color.gray(0.25);
         panelColor = Color.gray(0.35);
-        frameColor = Color.gray(1.);
-        frameSize = 3;
         fadeDuration = new Duration(350);
-
     }
 
     public static GlobalSettings singleton(){
@@ -44,8 +42,52 @@ public class GlobalSettings extends Settings{
     }
 
     @Override
-    public boolean load() {
-        return false;
+    public boolean load(){
+        if (!file.isFile())
+            return false;
+
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(file));
+
+            String line, id, value;
+            String[] splitLine;
+            while ((line = reader.readLine()) != null && line != "\n") {
+                assert(line.contains(" -> "));
+                splitLine = line.split(" -> ", 2);
+                id = splitLine[0].trim();
+                value = splitLine[1].trim();
+
+                handleId(id, value);
+                handleImageId(id, value);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
+    public void handleId(String id, String value){
+        switch(id){
+            case "imagePath":
+                imagePath = new File(value);
+                break;
+            case "preloadCount":
+                preloadCount = Integer.valueOf(value);
+                break;
+            case "panelColor":
+                panelColor = Color.valueOf(value);
+                break;
+            case "fadeDuration":
+                fadeDuration = new Duration(Integer.valueOf(value));
+                break;
+            case "onStartAction":
+                onStartAction = value;
+                break;
+            default:
+                System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());
+        }
     }
 
     @Override

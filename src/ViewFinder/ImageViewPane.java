@@ -10,9 +10,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 
-/**
- * Created by Leo on 01.10.2016.
- */
 public class ImageViewPane extends Region {
     private ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<ImageView>();
     private Rectangle frame;

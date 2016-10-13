@@ -6,31 +6,18 @@ import java.io.*;
 public class ImageSettings extends Settings {
     public Color backgroundColor;
     public boolean hasFrame;
-    public Color frameColor = new Color(1., 1., 1., 1.);
-    public int frameSize = 5;
+    public Color frameColor;
+    public int frameSize;
 
 
-    public ImageSettings(String fileName, String projectName, Color backgroundColor){
+
+    public ImageSettings(String fileName, String projectName){
         super(fileName, projectName);
-        setBC(backgroundColor);
         this.hasFrame = false;
-        this.fileName = fileName;
-    }
 
-    public ImageSettings(String fileName, String projectName, Color backgroundColor, boolean hasFrame){
-        super(fileName, projectName);
-        setBC(backgroundColor);
-        this.hasFrame = true;
-        this.fileName = fileName;
-    }
-
-    public ImageSettings(String fileName, String projectName, Color backgroundColor, Color frameColor, int frameSize){
-        super(fileName, projectName);
-        setBC(backgroundColor);
-        this.hasFrame = true;
-        this.frameColor = frameColor;
-        this.frameSize = frameSize;
-        this.fileName = fileName;
+        backgroundColor = Color.gray(0.25);
+        frameColor = Color.gray(1.);
+        frameSize = 3;
     }
 
     @Override
@@ -67,10 +54,7 @@ public class ImageSettings extends Settings {
                 id = splitLine[0].trim();
                 value = splitLine[1].trim();
 
-                switch(id){
-                    case "bgc":
-                        setBC(value);
-                }
+                handleImageId(id, value);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -80,11 +64,20 @@ public class ImageSettings extends Settings {
         return true;
     }
 
-    public void setBC(Color backgroundColor){
-        this.backgroundColor = backgroundColor;
+    public void handleImageId(String id, String value){
+        switch(id){
+            case "backgroundColor":
+                backgroundColor = Color.valueOf(value);
+                break;
+            case "frameColor":
+                frameColor = Color.valueOf(value);
+                break;
+            case "frameSize":
+                frameSize = Integer.valueOf(value);
+                break;
+            default:
+                System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());
+        }
     }
 
-    public void setBC(String hashValue){
-        this.backgroundColor = Color.valueOf(hashValue);
-    }
 }
