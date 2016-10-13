@@ -13,11 +13,6 @@ public class ImageSettings extends Settings {
 
     public ImageSettings(String fileName, String projectName){
         super(fileName, projectName);
-        this.hasFrame = false;
-
-        backgroundColor = Color.gray(0.25);
-        frameColor = Color.gray(1.);
-        frameSize = 3;
     }
 
     @Override
@@ -28,7 +23,8 @@ public class ImageSettings extends Settings {
         }
         try {
             PrintWriter fileWriter = new PrintWriter(file);
-            fileWriter.println("method needs to be overwritten in Subclass");
+
+            writeImageSettings(fileWriter);
 
             fileWriter.close();
         } catch (FileNotFoundException e) {
@@ -36,6 +32,17 @@ public class ImageSettings extends Settings {
             return false;
         }
         return true;
+    }
+
+    protected void writeImageSettings(PrintWriter fileWriter){
+        //handle "null"-Exceptions for primitive types
+
+        if (backgroundColor != null)
+            fileWriter.println("backgroundColor -> "+backgroundColor); // format: 0xffffffff
+        if (frameColor!= null)
+            fileWriter.println("frameColor -> "+frameColor); // format: 0xffffffff
+        fileWriter.println("frameSize -> "+String.valueOf(frameSize));
+        fileWriter.println("hasFrame -> "+String.valueOf(hasFrame));
     }
 
     @Override
@@ -64,20 +71,28 @@ public class ImageSettings extends Settings {
         return true;
     }
 
-    public void handleImageId(String id, String value){
-        switch(id){
-            case "backgroundColor":
-                backgroundColor = Color.valueOf(value);
-                break;
-            case "frameColor":
-                frameColor = Color.valueOf(value);
-                break;
-            case "frameSize":
-                frameSize = Integer.valueOf(value);
-                break;
-            default:
-                System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());
+    protected boolean handleImageId(String id, String value){
+        try{
+            switch(id){
+                case "backgroundColor":
+                    backgroundColor = Color.valueOf(value);
+                    break;
+                case "frameColor":
+                    frameColor = Color.valueOf(value);
+                    break;
+                case "frameSize":
+                    frameSize = Integer.valueOf(value);
+                    break;
+                case "hasFrame":
+                    hasFrame = Boolean.valueOf(value);
+                    break;
+                default:
+                    System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());
+                    return false;
+            }
+        } catch(IllegalArgumentException e){
+            e.printStackTrace();
         }
+        return true;
     }
-
 }

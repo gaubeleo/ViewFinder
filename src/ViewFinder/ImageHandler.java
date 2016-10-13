@@ -17,14 +17,18 @@ import java.util.Vector;
 public class ImageHandler {
     private static ImageHandler instance;
 
+    private static GlobalSettings globalSettings;
+
     protected Vector<File> files;
-    protected HashMap<File, ImageSettings> imageSettings;
+    protected HashMap<File, ImageSettings> settings;
     protected HashMap<File, Image> images;
     protected HashMap<File, Thread> threads;
 
     private Random random = new Random();
 
     private ImageHandler(){
+        globalSettings = globalSettings.singleton();
+
         clear();
     }
 
@@ -52,7 +56,7 @@ public class ImageHandler {
 
     public void clear(){
         files = new Vector<File>();
-        imageSettings = new HashMap<File, ImageSettings>();
+        settings = new HashMap<File, ImageSettings>();
         images = new HashMap<File, Image>();
         threads = new HashMap<File, Thread>();
 
@@ -62,7 +66,16 @@ public class ImageHandler {
     public void addAll(File[] fileArray){
         for (File file : fileArray){
             files.add(file);
-            imageSettings.put(file, new ImageSettings(file.getName(), file.getParent(), Color.gray(random.nextDouble())));
+
+            ImageSettings imageSettings = new ImageSettings(file.getName(), file.getParentFile().getName());
+            imageSettings.load();
+            settings.put(file, imageSettings);
+            //Test-purpose only
+            if(random.nextDouble() < 0.1){
+                imageSettings.backgroundColor = Color.gray(random.nextDouble());
+                imageSettings.save();
+            }
+
             images.put(file, null);
             threads.put(file, null);
         }
@@ -172,7 +185,10 @@ public class ImageHandler {
     }
 
     public Color getBackgroundColor(File file){
-        return imageSettings.get(file).backgroundColor;
+        ImageSettings imageSettings = settings.get(file);
+        if (settings.get(file).backgroundColor != null)
+            return imageSettings.backgroundColor;
+        return globalSettings.backgroundColor;
     }
 
     public int getFileCount(){

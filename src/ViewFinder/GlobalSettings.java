@@ -3,10 +3,7 @@ package ViewFinder;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 public class GlobalSettings extends ImageSettings{
     private static GlobalSettings instance;
@@ -30,6 +27,12 @@ public class GlobalSettings extends ImageSettings{
         preloadCount = 2;
         onStartAction = "Default";
 
+        //set ImageSettings
+        backgroundColor = Color.gray(0.25);
+        frameColor = Color.gray(1.);
+        frameSize = 3;
+        hasFrame = true;
+
         panelColor = Color.gray(0.35);
         fadeDuration = new Duration(350);
     }
@@ -39,6 +42,38 @@ public class GlobalSettings extends ImageSettings{
             instance = new GlobalSettings("Default");
 
         return instance;
+    }
+
+    @Override
+    public boolean save() {
+        File dir = file.getParentFile();
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+        try {
+            PrintWriter fileWriter = new PrintWriter(file);
+
+            writeSettings(fileWriter);
+            writeImageSettings(fileWriter);
+
+            fileWriter.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    public void writeSettings(PrintWriter fileWriter){
+        //handle "null"-Exceptions for primitive types
+
+        if (imagePath != null)
+            fileWriter.println("imagePath -> "+imagePath.getAbsolutePath());
+        if (fadeDuration != null)
+            fileWriter.println("fadeDuration -> "+String.valueOf((int)fadeDuration.toMillis()));
+        fileWriter.println("preloadCount -> "+String.valueOf(preloadCount));
+        if (panelColor != null)
+            fileWriter.println("panelColor -> "+panelColor.toString()); // format: 0xffffffff
     }
 
     @Override
@@ -57,8 +92,8 @@ public class GlobalSettings extends ImageSettings{
                 id = splitLine[0].trim();
                 value = splitLine[1].trim();
 
-                handleId(id, value);
-                handleImageId(id, value);
+                if (!handleId(id, value))
+                    handleImageId(id, value);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -68,37 +103,39 @@ public class GlobalSettings extends ImageSettings{
         return true;
     }
 
-    public void handleId(String id, String value){
-        switch(id){
-            case "imagePath":
-                imagePath = new File(value);
-                break;
-            case "preloadCount":
-                preloadCount = Integer.valueOf(value);
-                break;
-            case "panelColor":
-                panelColor = Color.valueOf(value);
-                break;
-            case "fadeDuration":
-                fadeDuration = new Duration(Integer.valueOf(value));
-                break;
-            case "onStartAction":
-                onStartAction = value;
-                break;
-            default:
-                System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());
+    public boolean handleId(String id, String value){
+        try{
+            switch(id){
+                case "imagePath":
+                    imagePath = new File(value);
+                    break;
+                case "fadeDuration":
+                    fadeDuration = new Duration(Integer.valueOf(value));
+                    break;
+                case "preloadCount":
+                    preloadCount = Integer.valueOf(value);
+                    break;
+                case "panelColor":
+                    panelColor = Color.valueOf(value);
+                    break;
+                case "onStartAction":
+                    onStartAction = value;
+                    break;
+                default:
+                    //System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());
+                    return false;
+            }
+        } catch(IllegalArgumentException e){
+            e.printStackTrace();
         }
+        return true;
     }
 
-    @Override
-    public boolean save() {
-        return false;
-    }
 
     public void newProject(String projectName, File imagePath){
-        this.projectName = projectName;
-        this.imagePath = imagePath;
+        imagePath = imagePath;
 
+        changeFile(fileName, projectName);
         save();
     }
 }
