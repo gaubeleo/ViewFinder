@@ -20,7 +20,17 @@ public class FileChooser extends Stage {
 
     public File chooseImageFolder(File defaultDirectory){
         DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("JavaFX Projects");
+        chooser.setTitle("Create new Project");
+        chooser.setInitialDirectory(defaultDirectory);
+        File selectedDirectory = chooser.showDialog(this);
+
+        return selectedDirectory;
+    }
+    public File chooseExistingProject() {return chooseExistingProject(new File(".\\data\\projects\\"));}
+
+    public File chooseExistingProject(File defaultDirectory) {
+        DirectoryChooser chooser = new DirectoryChooser();
+        chooser.setTitle("Open existing Project");
         chooser.setInitialDirectory(defaultDirectory);
         File selectedDirectory = chooser.showDialog(this);
 
@@ -40,11 +50,38 @@ public class FileChooser extends Stage {
         return input;
     }
 
-    public void allertNoImages(){
+    public void alertNoImages(){
         Alert dialog = new Alert(Alert.AlertType.WARNING);
         dialog.setTitle("Warning");
         dialog.setHeaderText(null);
         dialog.setContentText("This Directory does not contain any images!");
+
+        dialog.showAndWait();
+    }
+
+    public void alertInvalidProjectName() {
+        Alert dialog = new Alert(Alert.AlertType.WARNING);
+        dialog.setTitle("Warning");
+        dialog.setHeaderText(null);
+        dialog.setContentText("This is not a valid name for a ViewFinder-Project!");
+
+        dialog.showAndWait();
+    }
+
+    public void alertNoProject() {
+        Alert dialog = new Alert(Alert.AlertType.WARNING);
+        dialog.setTitle("Warning");
+        dialog.setHeaderText("You selected a directory that is no ViewFinder Project!");
+        dialog.setContentText("All ViewFinder-Projects contain a File called 'GlobalSettings.set'!");
+
+        dialog.showAndWait();
+    }
+
+    public void alertMissingImages() {
+        Alert dialog = new Alert(Alert.AlertType.WARNING);
+        dialog.setTitle("Warning");
+        dialog.setHeaderText("This Project contains images which could not be found!");
+        dialog.setContentText("Would you like to specify the new location of ... (needs to be implemented)!");
 
         dialog.showAndWait();
     }

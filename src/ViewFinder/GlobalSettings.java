@@ -133,9 +133,18 @@ public class GlobalSettings extends ImageSettings{
 
 
     public void newProject(String projectName, File imagePath){
-        imagePath = imagePath;
+        this.imagePath = imagePath;
 
-        changeFile(fileName, projectName);
+        changeFilePath(fileName, projectName);
         save();
+    }
+
+    public boolean openProject(String openProjectName){
+        changeFilePath("GlobalSettings.set", openProjectName);
+        if (!file.exists()){
+            System.out.println(file.getAbsolutePath());
+            return false;
+        }
+        return load();
     }
 }

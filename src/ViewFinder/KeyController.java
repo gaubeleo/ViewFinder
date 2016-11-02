@@ -1,6 +1,7 @@
 package ViewFinder;
 
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 
 public class KeyController {
     private static KeyController instance;
@@ -63,6 +64,12 @@ public class KeyController {
             case RIGHT:
                 slideshow.next();
                 break;
+            case UP:
+                slideshow.brightenBackground();
+                break;
+            case DOWN:
+                slideshow.darkenBackground();
+                break;
 
             case I:
                 slideshow.slidePanels();
@@ -86,4 +93,5 @@ public class KeyController {
     public void setGallery(Gallery gallery) {
         this.gallery = gallery;
     }
+
 }

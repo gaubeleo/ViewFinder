@@ -11,9 +11,6 @@ import java.util.HashMap;
 import java.util.Random;
 import java.util.Vector;
 
-/**
- * Created by Leo on 05.10.2016.
- */
 public class ImageHandler {
     private static ImageHandler instance;
 
@@ -22,7 +19,9 @@ public class ImageHandler {
     protected Vector<File> files;
     protected HashMap<File, ImageSettings> settings;
     protected HashMap<File, Image> images;
+    protected HashMap<File, Image> thumbnails;
     protected HashMap<File, Thread> threads;
+    protected HashMap<File, Thread> thumbnailThreads;
 
     private Random random = new Random();
 
@@ -58,7 +57,9 @@ public class ImageHandler {
         files = new Vector<File>();
         settings = new HashMap<File, ImageSettings>();
         images = new HashMap<File, Image>();
+        thumbnails = new HashMap<File, Image>();
         threads = new HashMap<File, Thread>();
+        thumbnailThreads = new HashMap<File, Thread>();
 
         System.gc();
     }
@@ -67,7 +68,7 @@ public class ImageHandler {
         for (File file : fileArray){
             files.add(file);
 
-            ImageSettings imageSettings = new ImageSettings(file.getName(), file.getParentFile().getName());
+            ImageSettings imageSettings = new ImageSettings(file.getName(), globalSettings.projectName);
             imageSettings.load();
             settings.put(file, imageSettings);
             //Test-purpose only
@@ -77,8 +78,11 @@ public class ImageHandler {
             }
 
             images.put(file, null);
+            thumbnails.put(file, null);
             threads.put(file, null);
+            thumbnailThreads.put(file, null);
         }
+        //preloadThumbnailsThreaded();
     }
 
     public void setFiles(File[] fileArray){
@@ -86,7 +90,7 @@ public class ImageHandler {
         addAll(fileArray);
 
         //TEMP
-        preload_threaded(0);
+        preloadThreaded(0);
     }
 
     public boolean chooseDirectory(File path){
@@ -112,12 +116,53 @@ public class ImageHandler {
         return true;
     }
 
+    public void preloadThumbnailsThreaded(){
+        for (int i=0; i<4; i++){
+            Thread thread = new Thread(() -> {
+                for (File file : files){
+                    preloadThumbnailThreaded(file);
+
+                    try {
+                        thumbnailThreads.get(file).join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            thread.start();
+        }
+    }
+
+    public void preloadThumbnailThreaded(File file){
+        if (thumbnails.get(file) != null || thumbnailThreads.get(file) != null)
+            return;
+
+        Thread thread = new Thread(() -> {
+            preloadThumbnail(file);
+            thumbnailThreads.put(file, null);
+        });
+        thumbnailThreads.put(file, thread);
+        thread.start();
+    }
+
+    public void preloadThumbnail(File file){
+        if (thumbnails.get(file) != null)
+            return;
+        try {
+            thumbnails.put(file, new Image(new FileInputStream(file), 0, 400, true, true));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (OutOfMemoryError e){
+            e.printStackTrace();
+        }
+    }
+
     public void preload(int index){
         preload(files.get(index));
     }
 
     public void preload(File file){
-        if (images.get(file) != null && threads.get(file) != null)
+        if (images.get(file) != null)
             return;
 
         try {
@@ -129,12 +174,12 @@ public class ImageHandler {
         }
     }
 
-    public void preload_threaded(int index){
-        preload_threaded(files.get(index));
+    public void preloadThreaded(int index){
+        preloadThreaded(files.get(index));
     }
 
-    public void preload_threaded(File file){
-        if (images.get(file) != null && threads.get(file) != null)
+    public void preloadThreaded(File file){
+        if (images.get(file) != null || threads.get(file) != null)
             return;
 
         Thread thread = new Thread(() -> {
@@ -180,6 +225,31 @@ public class ImageHandler {
         return images.get(file);
     }
 
+    public Image getThumbnail(int index) {
+        if (index >= getFileCount())
+            return null;
+        return getThumbnail(files.get(index));
+    }
+
+    private Image getThumbnail(File file) {
+        assert(files.size() == thumbnails.size());
+
+        if (thumbnails.get(file) == null){
+            if (thumbnailThreads.get(file) == null){
+                System.out.println("Image-Thumbnail Preloading does not work correctly!");
+                preloadThumbnail(file);
+                return thumbnails.get(file);
+            }
+            try {
+                // wait for preloading to finish
+                thumbnailThreads.get(file).join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return thumbnails.get(file);
+    }
+
     public Color getBackgroundColor(int index){
         return getBackgroundColor(files.get(index));
     }
@@ -194,4 +264,5 @@ public class ImageHandler {
     public int getFileCount(){
         return files.size();
     }
+
 }

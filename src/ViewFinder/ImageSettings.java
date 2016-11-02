@@ -37,6 +37,7 @@ public class ImageSettings extends Settings {
     protected void writeImageSettings(PrintWriter fileWriter){
         //handle "null"-Exceptions for primitive types
 
+
         if (backgroundColor != null)
             fileWriter.println("backgroundColor -> "+backgroundColor); // format: 0xffffffff
         if (frameColor!= null)

@@ -3,7 +3,6 @@ package ViewFinder;
 import javafx.animation.FadeTransition;
 import javafx.animation.Transition;
 import javafx.geometry.Insets;
-import javafx.scene.CacheHint;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
@@ -122,7 +121,7 @@ public class Slideshow extends BorderPane {
                 image.setImage(imageHandler.get(index));
             }
             else
-                imageHandler.preload_threaded(getRealIndex(index+offset));
+                imageHandler.preloadThreaded(getRealIndex(index+offset));
         }
         return true;
     }
@@ -138,7 +137,7 @@ public class Slideshow extends BorderPane {
         increase_index();
 
         imageHandler.drop(getRealIndex((index-1)-preloadCount));
-        imageHandler.preload_threaded(getRealIndex(index+preloadCount));
+        imageHandler.preloadThreaded(getRealIndex(index+preloadCount));
     }
 
     public void previous(){
@@ -151,7 +150,15 @@ public class Slideshow extends BorderPane {
         reduce_index();
 
         imageHandler.drop(getRealIndex((index+1)+preloadCount));
-        imageHandler.preload_threaded(getRealIndex(index-preloadCount));
+        imageHandler.preloadThreaded(getRealIndex(index-preloadCount));
+    }
+
+    public void darkenBackground(){
+        //backgroundHandler.
+    }
+
+    public void brightenBackground(){
+
     }
 
     public void slidePanels(){

@@ -10,14 +10,14 @@ public abstract class Settings {
     protected final String extension = ".set";
 
     public Settings(String fileName, String projectName){
-        changeFile(fileName, projectName);
+        changeFilePath(fileName, projectName);
     }
 
-    protected void changeFile(String fileName, String projectName){
+    protected void changeFilePath(String fileName, String projectName){
         this.fileName = fileName;
         this.projectName = projectName;
 
-        file = new File(".\\data\\settings\\"+projectName+"\\"+fileName+extension);
+        file = new File(".\\data\\projects\\"+projectName+"\\"+fileName.replace(extension, "")+extension);
     }
 
     public abstract boolean load();

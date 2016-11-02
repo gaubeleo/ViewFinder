@@ -17,7 +17,7 @@ public class BackgroundHandler {
     private Transition fadeBC;
 
     public BackgroundHandler(Region root) {
-        this(root, Color.gray(0.3));
+        this(root, Color.WHITE);
     }
 
     public BackgroundHandler(Region root, Color currentBC) {

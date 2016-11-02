@@ -1,11 +1,13 @@
 package ViewFinder;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.Duration;
 
 import java.io.File;
 
@@ -60,8 +62,19 @@ public class ViewFinder extends Application {
     }
 
     public void setupStage(){
-        primaryStage.setMinHeight(400);
-        primaryStage.setMinWidth(600);
+        primaryStage.setMinHeight(600);
+        primaryStage.setMinWidth(800);
+
+        primaryStage.maximizedProperty().addListener((observableValue, was, now)-> {
+            if (!now){
+                Rectangle2D rect = Screen.getPrimary().getVisualBounds();
+                primaryStage.setX(rect.getWidth()*0.1);
+                primaryStage.setY(rect.getHeight()*0.1);
+
+                primaryStage.setWidth(rect.getWidth()*0.8);
+                primaryStage.setHeight(rect.getHeight()*0.8);
+            }
+        });
 
         primaryStage.setFullScreenExitHint("");
         primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
@@ -73,7 +86,6 @@ public class ViewFinder extends Application {
 
         primaryStage.setOnCloseRequest(e -> exit());
     }
-
 
     public void switchToStartScreen(){
         if (startScreenScene == null){
@@ -106,6 +118,22 @@ public class ViewFinder extends Application {
         slideshowScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
     }
 
+    private void switchToGallery() {
+        if (galleryScene == null){
+            galleryLayout = new Gallery(globalSettings, imageHandler);
+            galleryScene = new Scene(galleryLayout);
+        }
+        galleryLayout.resetIndex();
+        keyController.setGallery(galleryLayout);
+        galleryLayout.create();
+
+        currentLayout = galleryLayout;
+        currentScene = galleryScene;
+        switchToLayout();
+
+        galleryScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
+    }
+
     // create a smoother transition between scenes...
     private void switchToLayout(){
         primaryStage.setScene(currentScene);
@@ -119,29 +147,61 @@ public class ViewFinder extends Application {
         primaryStage.setIconified(true);
 
         File imagePath = fileChooser.chooseImageFolder();
-        if (imagePath == null)
+        if (imagePath == null){
+            primaryStage.setIconified(false);
             return;
+        }
 
         if (!imageHandler.chooseDirectory(imagePath)) {
-            fileChooser.allertNoImages();
+            fileChooser.alertNoImages();
+            primaryStage.setIconified(false);
             return;
         }
 
         String projectName = fileChooser.chooseProjectName(imagePath.getName());
 
-        if (!projectName.equals("")){
-            System.out.println("creating new Project: "+projectName);
-            globalSettings.newProject(projectName, imagePath);
-
-            switchToSlideshow();
-            //switchToGallery();
-
+        if (projectName.equals("")){
+            //fileChooser.alertInvalidProjectName();
+            primaryStage.setIconified(false);
+            return;
         }
+
+        globalSettings.newProject(projectName, imagePath);
+        System.out.println("creating new Project: "+projectName);
+
+        //switchToSlideshow();
+        switchToGallery();
     }
 
     public void openProject(){
+        primaryStage.setIconified(true);
 
+        File projectPath = fileChooser.chooseExistingProject();
+        if (projectPath == null){
+            fileChooser.alertNoProject();
+            primaryStage.setIconified(false);
+            return;
+        }
+
+        //assert that imagePath and other variables are successfully read from globalSettings
+        if (!globalSettings.openProject(projectPath.getName())){
+            primaryStage.setIconified(false);
+            return;
+        }
+
+        if (!imageHandler.chooseDirectory(globalSettings.imagePath)) {
+            //should not happen since it is a already existing project, except if real images are no longer accessible
+            fileChooser.alertMissingImages(); //--> offer to select new location of images
+            primaryStage.setIconified(false);
+            return;
+        }
+
+        System.out.println("Opening existing Project: "+globalSettings.projectName);
+
+        //switchToSlideshow();
+        switchToGallery();
     }
+
 
     public void toggleFullscreen(){
         if (!globalSettings.fullscreen)
