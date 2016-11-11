@@ -1,11 +1,9 @@
 package ViewFinder;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -15,7 +13,6 @@ import java.io.File;
 public class ViewFinder extends Application {
     private Stage primaryStage;
     private Scene currentScene;
-    private Pane currentLayout;
 
     private Scene startScreenScene;
     private Scene slideshowScene;
@@ -45,13 +42,34 @@ public class ViewFinder extends Application {
 
         fileChooser = new FileChooser();
         imageHandler = ImageHandler.singleton();
+
+        Rectangle2D screenSize = Screen.getPrimary().getVisualBounds();
+
+        startScreenLayout = new StartScreen();
+        startScreenLayout.create();
+        startScreenScene = new Scene(startScreenLayout, screenSize.getWidth(), screenSize.getHeight());
+
+        galleryLayout = new Gallery();
+        galleryLayout.create();
+        galleryScene = new Scene(galleryLayout, screenSize.getWidth(), screenSize.getHeight());
+
+        slideshowLayout = new Slideshow();
+        slideshowLayout.create();
+        slideshowScene = new Scene(slideshowLayout, screenSize.getWidth(), screenSize.getHeight());
+
         keyController = KeyController.singleton(this);
+        keyController.setGallery(galleryLayout);
+        keyController.setSlideshow(slideshowLayout);
+
         setupStage();
+
+        currentScene = startScreenScene;
+        //switchToStartScreen();
 
         switch(globalSettings.onStartAction){
             case "Default":
-                //newProject();
-                switchToStartScreen();
+                newProject();
+                //switchToStartScreen();
                 //switchToSlideshow();
                 break;
             case "Open":
@@ -88,54 +106,34 @@ public class ViewFinder extends Application {
     }
 
     public void switchToStartScreen(){
-        if (startScreenScene == null){
-            startScreenLayout = new StartScreen();
-            startScreenLayout.create();
-            startScreenScene = new Scene(startScreenLayout);
-        }
         keyController.setStartScreen(startScreenLayout);
 
-        currentLayout = startScreenLayout;
         currentScene = startScreenScene;
         switchToLayout();
+
         startScreenScene.setOnKeyPressed(event -> keyController.handleStartScreen(event));
     }
 
     public void switchToSlideshow(){
-        if (slideshowScene == null){
-            slideshowLayout = new Slideshow(globalSettings, imageHandler);
-            slideshowLayout.create();
-            slideshowScene = new Scene(slideshowLayout);
-        }
         slideshowLayout.resetIndex();
-        slideshowLayout.preload();
-        keyController.setSlideshow(slideshowLayout);
 
-        currentLayout = slideshowLayout;
         currentScene = slideshowScene;
         switchToLayout();
 
         slideshowScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
     }
 
-    private void switchToGallery() {
-        if (galleryScene == null){
-            galleryLayout = new Gallery(globalSettings, imageHandler);
-            galleryScene = new Scene(galleryLayout);
-        }
+    public void switchToGallery() {
         galleryLayout.resetIndex();
-        keyController.setGallery(galleryLayout);
-        galleryLayout.create();
 
-        currentLayout = galleryLayout;
         currentScene = galleryScene;
         switchToLayout();
 
-        galleryScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
+        galleryScene.setOnKeyPressed(event -> keyController.handleGallery(event));
     }
 
     // create a smoother transition between scenes...
-    private void switchToLayout(){
+    public void switchToLayout(){
         primaryStage.setScene(currentScene);
         if (!primaryStage.isShowing())
             primaryStage.show();
@@ -152,7 +150,7 @@ public class ViewFinder extends Application {
             return;
         }
 
-        if (!imageHandler.chooseDirectory(imagePath)) {
+        if (!imageHandler.isEmpty(imagePath)) {
             fileChooser.alertNoImages();
             primaryStage.setIconified(false);
             return;
@@ -167,10 +165,16 @@ public class ViewFinder extends Application {
         }
 
         globalSettings.newProject(projectName, imagePath);
+        imageHandler.chooseDirectory(imagePath);
+
+        galleryLayout.preload();
+        slideshowLayout.preload();
+
         System.out.println("creating new Project: "+projectName);
 
-        //switchToSlideshow();
-        switchToGallery();
+        if (currentScene == startScreenScene)
+            switchToSlideshow();
+            //switchToGallery();
     }
 
     public void openProject(){
@@ -195,11 +199,15 @@ public class ViewFinder extends Application {
             primaryStage.setIconified(false);
             return;
         }
+        galleryLayout.preload();
+        slideshowLayout.preload();
 
         System.out.println("Opening existing Project: "+globalSettings.projectName);
 
-        //switchToSlideshow();
-        switchToGallery();
+        primaryStage.setIconified(false);
+        if (currentScene == startScreenScene)
+            switchToSlideshow();
+            //switchToGallery();
     }
 
 

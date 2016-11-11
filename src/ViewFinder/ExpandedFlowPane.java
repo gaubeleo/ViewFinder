@@ -9,13 +9,23 @@ import javafx.scene.layout.FlowPane;
 import java.util.List;
 
 public class ExpandedFlowPane extends FlowPane {
+    GlobalSettings globalSettings;
 
-    public ExpandedFlowPane(ScrollPane scrollPane){
+    public ExpandedFlowPane(){
         super();
 
+        globalSettings = GlobalSettings.singleton();
         widthProperty().addListener((observable, oldValue, newValue) -> {
             expandToWidth();
         });
+    }
+
+    public void clear(){
+        getChildren().clear();
+    }
+
+    public Thumbnail getChild(int i){
+        return (Thumbnail) getChildren().get(i);
     }
 
     public void expandToWidth(){
@@ -23,7 +33,7 @@ public class ExpandedFlowPane extends FlowPane {
         assert(getOrientation() == Orientation.HORIZONTAL);
         assert(getWidth() > 0);
 
-        double maxRunLength = getWidth()-(getInsets().getLeft()+getInsets().getRight()) - 3;
+        double maxRunLength = getWidth()-(getInsets().getLeft()+getInsets().getRight())- 6;
         double currentRunLength = 0.;
         int firstRowIndex = 0;
 

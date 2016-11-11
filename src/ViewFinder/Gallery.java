@@ -1,11 +1,8 @@
 package ViewFinder;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.ScaleTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
 
@@ -22,9 +19,9 @@ public class Gallery extends BorderPane {
 
     ////////////////////////////////////
 
+    protected ScrollPane scrollPane;
     protected ExpandedFlowPane flowLayout;
 
-    protected Vector<ImageView> images;
     protected Vector<Rectangle> frames;
 
     ////////////////////////////////////
@@ -33,80 +30,92 @@ public class Gallery extends BorderPane {
 
     ////////////////////////////////////
 
-    Gallery(GlobalSettings globalSettings, ImageHandler imageHandler){
+    Gallery(){
         this.index = 0;
 
-        this.globalSettings = globalSettings;
-        this.imageHandler = imageHandler;
+        this.globalSettings = GlobalSettings.singleton();
+        this.imageHandler = ImageHandler.singleton();
 
-        images = new Vector<ImageView>();
         frames = new Vector<Rectangle>();;
-
-        create();
     }
 
     public void create(){
         // Background and Frame Handler
-        backgroundHandler = new BackgroundHandler(this);
+        backgroundHandler =  BackgroundHandler.singleton(this, globalSettings.backgroundColor);
 
-        ScrollPane scrollPane = new ScrollPane();
+        scrollPane = new ScrollPane();
 
-        flowLayout = new ExpandedFlowPane(scrollPane);
+        flowLayout = new ExpandedFlowPane();
         flowLayout.prefWidthProperty().bind(widthProperty());
 
         flowLayout.setAlignment(Pos.BASELINE_LEFT);
-        flowLayout.setPadding(new Insets(15, 15, 15, 15));
+        flowLayout.setPadding(new Insets(115, 65, 15, 65));
         flowLayout.setHgap(15);
         flowLayout.setVgap(15);
-
-        images.clear();
-        for (int i=0; i< imageHandler.getFileCount(); i++) {
-            ImageView imageView = new ImageView(imageHandler.getThumbnail(i));
-            imageView.setPreserveRatio(true);
-            imageView.setSmooth(true);
-            images.add(imageView);
-            flowLayout.getChildren().add(imageView);
-        }
-        //addThumbnailsThreaded();
-        //flowLayout.expandToWidth();
 
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // Horizontal
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Vertical scroll bar
         scrollPane.setFitToWidth(true);
         scrollPane.setContent(flowLayout);
 
+        settings = SettingsPanel.singleton();
+        info = InfoPanel.singleton();
+
         setCenter(scrollPane);
+        setLeft(settings);
+        setRight(info);
+    }
+
+    public void newImageSet(){
+        flowLayout.clear();
+        for (int i=0; i<imageHandler.getFileCount(); i++) {
+            Thumbnail thumbnail = new Thumbnail(flowLayout);
+            flowLayout.getChildren().add(thumbnail);
+        }
     }
 
     public void addThumbnailsThreaded(){
-        Thread thread = new Thread(() -> {
+        newImageSet();
+        new Thread(() -> {
             for (int i=0; i< imageHandler.getFileCount(); i++){
-                ImageView imageView = images.get(i);
-
-                FadeTransition fadeIn = new FadeTransition(globalSettings.fadeDuration, imageView);
-                fadeIn.setFromValue(0.0);
-                fadeIn.setToValue(1.0);
-
-                ScaleTransition scaleIn = new ScaleTransition(globalSettings.fadeDuration, imageView);
-                scaleIn.setFromX(0.7);
-                scaleIn.setToX(1.0);
-                scaleIn.setFromY(0.7);
-                scaleIn.setToY(1.0);
-
-                imageView.setImage(imageHandler.getThumbnail(i));
-                imageView.setPreserveRatio(true);
-                imageView.setSmooth(true);
-                //fadeIn.play();
-                //scaleIn.play();
+                Thumbnail thumbnail = flowLayout.getChild(i);
+                thumbnail.show(imageHandler.getThumbnail(i));
             }
-        });
-        thread.start();
+        }).start();
+    }
+
+    public void preload(){
+        preload(2);
+    }
+
+    public void preload(int threadCount){
+        imageHandler.preloadThumbnailsThreaded(threadCount);
+        addThumbnailsThreaded();
     }
 
     public void next(){
     }
 
     public void previous(){
+    }
+
+    public void scrollUp(){
+        double scrollSpeed = 0.075 / (flowLayout.getHeight()/scrollPane.getHeight());
+        scrollPane.setVvalue(max(scrollPane.getVvalue()-scrollSpeed, scrollPane.getVmin()));
+    }
+
+    public void scrollDown(){
+        double scrollSpeed = 0.075 / (flowLayout.getHeight()/scrollPane.getHeight());
+        scrollPane.setVvalue(min(scrollPane.getVvalue()+scrollSpeed, scrollPane.getVmax()));
+
+    }
+
+    private static double max(double x, double y) {
+        return x>y ? x : y;
+    }
+
+    private static double min(double x, double y) {
+        return x<y ? x : y;
     }
 
     public void darkenBackground(){

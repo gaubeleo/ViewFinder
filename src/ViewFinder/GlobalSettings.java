@@ -19,27 +19,27 @@ public class GlobalSettings extends ImageSettings{
 
     public Duration fadeDuration;
     private GlobalSettings(String projectName) {
-        super("GlobalSettings", projectName);
+        super("OnStartSettings", projectName);
 
         fullscreen = false;
 
-        imagePath = new File("H:\\Images\\Scotland - Isle ofSkye\\fancy");
-        preloadCount = 2;
+        imagePath = new File("");
         onStartAction = "Default";
+        preloadCount = 2;
 
         //set ImageSettings
-        backgroundColor = Color.gray(0.25);
-        frameColor = Color.gray(1.);
+        backgroundColor = Color.gray(0.15);
+        frameColor = Color.valueOf("#0099e5");
         frameSize = 3;
         hasFrame = true;
 
-        panelColor = Color.gray(0.35);
+        panelColor = Color.gray(0.25);
         fadeDuration = new Duration(350);
     }
 
     public static GlobalSettings singleton(){
         if (instance == null)
-            instance = new GlobalSettings("Default");
+            instance = new GlobalSettings(".");
 
         return instance;
     }
@@ -72,6 +72,8 @@ public class GlobalSettings extends ImageSettings{
         if (fadeDuration != null)
             fileWriter.println("fadeDuration -> "+String.valueOf((int)fadeDuration.toMillis()));
         fileWriter.println("preloadCount -> "+String.valueOf(preloadCount));
+        if (backgroundColor != null)
+            fileWriter.println("backgroundColor -> "+backgroundColor.toString()); // format: 0xffffffff
         if (panelColor != null)
             fileWriter.println("panelColor -> "+panelColor.toString()); // format: 0xffffffff
     }
@@ -115,6 +117,9 @@ public class GlobalSettings extends ImageSettings{
                 case "preloadCount":
                     preloadCount = Integer.valueOf(value);
                     break;
+                case "backgroundColor":
+                    backgroundColor = Color.valueOf(value);
+                    break;
                 case "panelColor":
                     panelColor = Color.valueOf(value);
                     break;
@@ -135,13 +140,14 @@ public class GlobalSettings extends ImageSettings{
     public void newProject(String projectName, File imagePath){
         this.imagePath = imagePath;
 
-        changeFilePath(fileName, projectName);
+        changeFilePath("GlobalSettings.set", projectName);
         save();
     }
 
     public boolean openProject(String openProjectName){
         changeFilePath("GlobalSettings.set", openProjectName);
         if (!file.exists()){
+            System.out.println("GlobalSettings missing: ");
             System.out.println(file.getAbsolutePath());
             return false;
         }

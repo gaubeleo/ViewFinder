@@ -82,7 +82,7 @@ public class ImageHandler {
             threads.put(file, null);
             thumbnailThreads.put(file, null);
         }
-        //preloadThumbnailsThreaded();
+        //preloadThumbnailsThreaded(3);
     }
 
     public void setFiles(File[] fileArray){
@@ -93,6 +93,25 @@ public class ImageHandler {
         preloadThreaded(0);
     }
 
+    public boolean isEmpty(File path){
+        final File[] fileList = path.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".jpg");
+            }
+        });
+
+        if (fileList == null){
+            System.out.format("'%s' is not a valid path!", path);
+            return false;
+        }
+        else if (fileList.length == 0) {
+            System.out.format("'%s' contains no .jpg images!", path);
+            return false;
+        }
+        return true;
+    }
+
+    // includes isEmpty
     public boolean chooseDirectory(File path){
         // will not change any files if not successful
 
@@ -116,21 +135,39 @@ public class ImageHandler {
         return true;
     }
 
-    public void preloadThumbnailsThreaded(){
-        for (int i=0; i<4; i++){
-            Thread thread = new Thread(() -> {
-                for (File file : files){
-                    preloadThumbnailThreaded(file);
+    private synchronized File getMissingThumbnail(){
+        for (File file: files){
+            if (thumbnails.get(file) == null && thumbnailThreads.get(file) == null){
+                return file;
+            }
+        }
+        return null;
+    }
 
-                    try {
-                        thumbnailThreads.get(file).join();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+    public void preloadThumbnailsThreaded(int threadCount){
+        new Thread(() -> {
+            File file = getMissingThumbnail();
+            Vector<File> curThreads = new Vector<File>(threadCount);
+            while (true){
+                for (int t=0; t< threadCount; t++) {
+                    if (file == null)
+                        break;
+                    preloadThumbnailThreaded(file);
+                    curThreads.add(file);
+                    file = getMissingThumbnail();
+                }
+                for (File f : curThreads){
+                    Thread t = thumbnailThreads.get(f);
+                    if (t != null){
+                        try {
+                            t.join();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
-            });
-            thread.start();
-        }
+            }
+        }).start();
     }
 
     public void preloadThumbnailThreaded(File file){
@@ -145,16 +182,18 @@ public class ImageHandler {
         thread.start();
     }
 
-    public void preloadThumbnail(File file){
+    public boolean preloadThumbnail(File file){
         if (thumbnails.get(file) != null)
-            return;
+            return true;
         try {
-            thumbnails.put(file, new Image(new FileInputStream(file), 0, 400, true, true));
+            thumbnails.put(file, new Image(new FileInputStream(file), 0, 250, true, true));
+            return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (OutOfMemoryError e){
             e.printStackTrace();
         }
+        return false;
     }
 
     public void preload(int index){

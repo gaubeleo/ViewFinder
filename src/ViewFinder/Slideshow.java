@@ -3,6 +3,7 @@ package ViewFinder;
 import javafx.animation.FadeTransition;
 import javafx.animation.Transition;
 import javafx.geometry.Insets;
+import javafx.scene.CacheHint;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
@@ -38,17 +39,17 @@ public class Slideshow extends BorderPane {
 
     ////////////////////////////////////
 
-    Slideshow(GlobalSettings globalSettings, ImageHandler imageHandler){
+    Slideshow(){
         this.index = 0;
         this.preloadCount = 2;
 
-        this.globalSettings = globalSettings;
-        this.imageHandler = imageHandler;
+        this.globalSettings = GlobalSettings.singleton();
+        this.imageHandler = ImageHandler.singleton();
     }
 
     public void create(){
         // Background and Frame Handler
-        backgroundHandler = new BackgroundHandler(this, globalSettings.backgroundColor);
+        backgroundHandler = BackgroundHandler.singleton(this, globalSettings.backgroundColor);
         frame = backgroundHandler.createFrame(globalSettings.frameSize);
 
         // Layout Components
@@ -56,8 +57,8 @@ public class Slideshow extends BorderPane {
         image.setImage(imageHandler.get(index));
         image.setPreserveRatio(true);
         image.setSmooth(true);
-        //image.setCache(true);
-        //image.setCacheHint(CacheHint.QUALITY);
+        image.setCache(true);
+        image.setCacheHint(CacheHint.SPEED);
 
         imageContainer = new ImageViewPane();
         imageContainer.setImageView(image);
@@ -110,11 +111,8 @@ public class Slideshow extends BorderPane {
         index = 0;
     }
 
-    public boolean preload(String path){
-        return preload();
-    }
 
-    public boolean preload(){
+    public void preload(){
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             if (offset == 0){
                 imageHandler.preload(getRealIndex(index));
@@ -123,7 +121,6 @@ public class Slideshow extends BorderPane {
             else
                 imageHandler.preloadThreaded(getRealIndex(index+offset));
         }
-        return true;
     }
 
 

@@ -8,6 +8,7 @@ import javafx.util.Duration;
 
 public class BackgroundHandler {
 
+    private static BackgroundHandler instance;
     private Region root;
     private Rectangle frame;
 
@@ -16,13 +17,20 @@ public class BackgroundHandler {
 
     private Transition fadeBC;
 
-    public BackgroundHandler(Region root) {
+    private BackgroundHandler(Region root) {
         this(root, Color.WHITE);
     }
 
-    public BackgroundHandler(Region root, Color currentBC) {
+    private BackgroundHandler(Region root, Color currentBC) {
         this.root = root;
         setCurrentBC(currentBC);
+    }
+
+    public static BackgroundHandler singleton(Region root, Color currentBC){
+        if (instance == null)
+            instance = new BackgroundHandler(root, currentBC);
+
+        return instance;
     }
 
     public Rectangle createFrame(int frameWidth){

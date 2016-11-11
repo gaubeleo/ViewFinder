@@ -23,9 +23,6 @@ public class KeyController {
 
     private void handleGlobal(KeyEvent e){
         switch (e.getCode()) {
-            case ESCAPE:
-                vf.exit();
-                break;
             case F5:
                 vf.toggleFullscreen();
                 break;
@@ -53,11 +50,29 @@ public class KeyController {
     }
 
     public void handleGallery(KeyEvent e){
+        switch (e.getCode()) {
+            case ESCAPE:
+                vf.switchToSlideshow();
+                break;
+            case UP:
+                gallery.scrollUp();
+                break;
+            case DOWN:
+                gallery.scrollDown();
+                break;
+            case I:
+                gallery.slidePanels();
+                break;
+        }
+
         handleGlobal(e);
     }
 
     public void handleSlideshow(KeyEvent e){
         switch (e.getCode()) {
+            case ESCAPE:
+                vf.switchToGallery();
+                break;
             case LEFT:
                 slideshow.previous();
                 break;
