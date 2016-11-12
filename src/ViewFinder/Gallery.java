@@ -4,6 +4,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.util.Vector;
@@ -16,6 +17,7 @@ public class Gallery extends BorderPane {
 
     private SettingsPanel settings;
     private InfoPanel info;
+    private Menu menu;
 
     ////////////////////////////////////
 
@@ -41,7 +43,7 @@ public class Gallery extends BorderPane {
 
     public void create(){
         // Background and Frame Handler
-        backgroundHandler =  BackgroundHandler.singleton(this, globalSettings.backgroundColor);
+        backgroundHandler =  BackgroundHandler.singleton(globalSettings.backgroundColor);
 
         scrollPane = new ScrollPane();
 
@@ -49,7 +51,7 @@ public class Gallery extends BorderPane {
         flowLayout.prefWidthProperty().bind(widthProperty());
 
         flowLayout.setAlignment(Pos.BASELINE_LEFT);
-        flowLayout.setPadding(new Insets(115, 65, 15, 65));
+        flowLayout.setPadding(new Insets(15, 65, 15, 65));
         flowLayout.setHgap(15);
         flowLayout.setVgap(15);
 
@@ -60,7 +62,9 @@ public class Gallery extends BorderPane {
 
         settings = SettingsPanel.singleton();
         info = InfoPanel.singleton();
+        menu = Menu.singleton();
 
+        setTop(menu);
         setCenter(scrollPane);
         setLeft(settings);
         setRight(info);
@@ -84,11 +88,23 @@ public class Gallery extends BorderPane {
         }).start();
     }
 
+    public void achieveFocus(){
+        backgroundHandler.setRoot(flowLayout);
+        backgroundHandler.setCurrentBC(Color.WHITE);
+
+        menu.setActive("gallery");
+
+        setTop(menu);
+        setLeft(settings);
+        setRight(info);
+    }
+
     public void preload(){
         preload(2);
     }
 
     public void preload(int threadCount){
+        resetIndex();
         imageHandler.preloadThumbnailsThreaded(threadCount);
         addThumbnailsThreaded();
     }
@@ -100,12 +116,12 @@ public class Gallery extends BorderPane {
     }
 
     public void scrollUp(){
-        double scrollSpeed = 0.075 / (flowLayout.getHeight()/scrollPane.getHeight());
+        double scrollSpeed = 0.05 / (flowLayout.getHeight()/scrollPane.getHeight());
         scrollPane.setVvalue(max(scrollPane.getVvalue()-scrollSpeed, scrollPane.getVmin()));
     }
 
     public void scrollDown(){
-        double scrollSpeed = 0.075 / (flowLayout.getHeight()/scrollPane.getHeight());
+        double scrollSpeed = 0.05 / (flowLayout.getHeight()/scrollPane.getHeight());
         scrollPane.setVvalue(min(scrollPane.getVvalue()+scrollSpeed, scrollPane.getVmax()));
 
     }

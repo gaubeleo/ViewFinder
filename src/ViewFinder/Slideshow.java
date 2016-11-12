@@ -17,6 +17,7 @@ public class Slideshow extends BorderPane {
     private ImageViewPane imageContainer;
     private SettingsPanel settings;
     private InfoPanel info;
+    private Menu menu;
 
     ////////////////////////////////////
 
@@ -49,7 +50,9 @@ public class Slideshow extends BorderPane {
 
     public void create(){
         // Background and Frame Handler
-        backgroundHandler = BackgroundHandler.singleton(this, globalSettings.backgroundColor);
+        System.out.println(globalSettings.backgroundColor.getRed());
+        
+        backgroundHandler = BackgroundHandler.singleton(globalSettings.backgroundColor);
         frame = backgroundHandler.createFrame(globalSettings.frameSize);
 
         // Layout Components
@@ -66,7 +69,9 @@ public class Slideshow extends BorderPane {
 
         settings = SettingsPanel.singleton();
         info = InfoPanel.singleton();
+        menu = Menu.singleton();
 
+        setTop(menu);
         setCenter(imageContainer);
         setLeft(settings);
         setRight(info);
@@ -111,8 +116,19 @@ public class Slideshow extends BorderPane {
         index = 0;
     }
 
+    public void achieveFocus(){
+        backgroundHandler.setRoot(this);
+        backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index+1)));
+
+        menu.setActive("slideshow");
+
+        setTop(menu);
+        setLeft(settings);
+        setRight(info);
+    }
 
     public void preload(){
+        resetIndex();
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             if (offset == 0){
                 imageHandler.preload(getRealIndex(index));

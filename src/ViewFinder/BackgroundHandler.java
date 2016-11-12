@@ -17,20 +17,24 @@ public class BackgroundHandler {
 
     private Transition fadeBC;
 
-    private BackgroundHandler(Region root) {
-        this(root, Color.WHITE);
+    private BackgroundHandler() {
+        this(Color.WHITE);
     }
 
-    private BackgroundHandler(Region root, Color currentBC) {
-        this.root = root;
-        setCurrentBC(currentBC);
+    private BackgroundHandler(Color currentBC) {
+        this.currentBC = currentBC;
     }
 
-    public static BackgroundHandler singleton(Region root, Color currentBC){
+    public static BackgroundHandler singleton(Color currentBC){
         if (instance == null)
-            instance = new BackgroundHandler(root, currentBC);
+            instance = new BackgroundHandler(currentBC);
 
         return instance;
+    }
+
+    public void setRoot(Region root){
+        this.root = root;
+        setCurrentBC(currentBC);
     }
 
     public Rectangle createFrame(int frameWidth){
@@ -73,7 +77,7 @@ public class BackgroundHandler {
     }
 
     public void adjustFrameColor(){
-        if (nextBC.getRed() > 0.5)
+        if (nextBC.getBrightness() > 0.5)
             frame.setStroke(Color.BLACK);
         else
             frame.setStroke(Color.WHITE);

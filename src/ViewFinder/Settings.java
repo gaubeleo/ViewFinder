@@ -14,10 +14,10 @@ public abstract class Settings {
     }
 
     protected void changeFilePath(String fileName, String projectName){
-        this.fileName = fileName;
+        this.fileName = fileName.replace(extension, "")+extension;
         this.projectName = projectName;
 
-        file = new File(".\\data\\projects\\"+projectName+"\\"+fileName.replace(extension, "")+extension);
+        file = new File(".\\data\\projects\\"+this.projectName+"\\"+this.fileName);
     }
 
     public abstract boolean load();

@@ -2,6 +2,7 @@ package ViewFinder;
 
 import javafx.application.Application;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.input.KeyCombination;
 import javafx.stage.Screen;
@@ -12,11 +13,9 @@ import java.io.File;
 
 public class ViewFinder extends Application {
     private Stage primaryStage;
-    private Scene currentScene;
+    private Parent currentLayout;
 
-    private Scene startScreenScene;
-    private Scene slideshowScene;
-    private Scene galleryScene;
+    private Scene currentScene;
 
     private StartScreen startScreenLayout;
     private Slideshow slideshowLayout;
@@ -43,32 +42,31 @@ public class ViewFinder extends Application {
         fileChooser = new FileChooser();
         imageHandler = ImageHandler.singleton();
 
-        Rectangle2D screenSize = Screen.getPrimary().getVisualBounds();
-
         startScreenLayout = new StartScreen();
         startScreenLayout.create();
-        startScreenScene = new Scene(startScreenLayout, screenSize.getWidth(), screenSize.getHeight());
 
         galleryLayout = new Gallery();
         galleryLayout.create();
-        galleryScene = new Scene(galleryLayout, screenSize.getWidth(), screenSize.getHeight());
 
         slideshowLayout = new Slideshow();
         slideshowLayout.create();
-        slideshowScene = new Scene(slideshowLayout, screenSize.getWidth(), screenSize.getHeight());
 
         keyController = KeyController.singleton(this);
         keyController.setGallery(galleryLayout);
         keyController.setSlideshow(slideshowLayout);
 
-        setupStage();
-
-        currentScene = startScreenScene;
+        currentLayout = startScreenLayout;
         //switchToStartScreen();
+
+        setupStage();
 
         switch(globalSettings.onStartAction){
             case "Default":
-                newProject();
+                //newProject();
+                if (globalSettings.mostRecentProject.getName().compareTo(".") == 0)
+                    switchToStartScreen();
+                else
+                    openProject(globalSettings.mostRecentProject);
                 //switchToStartScreen();
                 //switchToSlideshow();
                 break;
@@ -95,7 +93,7 @@ public class ViewFinder extends Application {
         });
 
         primaryStage.setFullScreenExitHint("");
-        primaryStage.setFullScreenExitKeyCombination(KeyCombination.NO_MATCH);
+        primaryStage.setFullScreenExitKeyCombination(KeyCombination.valueOf("P"));
 
         if (!globalSettings.fullscreen)
             primaryStage.setMaximized(true);
@@ -103,38 +101,43 @@ public class ViewFinder extends Application {
             primaryStage.setFullScreen(true);
 
         primaryStage.setOnCloseRequest(e -> exit());
+
+        Rectangle2D screenSize = Screen.getPrimary().getVisualBounds();
+        currentScene = new Scene(currentLayout, screenSize.getWidth(), screenSize.getHeight());
+
+        primaryStage.setScene(currentScene);
     }
 
     public void switchToStartScreen(){
         keyController.setStartScreen(startScreenLayout);
 
-        currentScene = startScreenScene;
+        currentLayout = startScreenLayout;
         switchToLayout();
 
-        startScreenScene.setOnKeyPressed(event -> keyController.handleStartScreen(event));
+        currentScene.setOnKeyPressed(event -> keyController.handleStartScreen(event));
     }
 
     public void switchToSlideshow(){
-        slideshowLayout.resetIndex();
+        slideshowLayout.achieveFocus();
 
-        currentScene = slideshowScene;
+        currentLayout = slideshowLayout;
         switchToLayout();
 
-        slideshowScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
+        currentScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
     }
 
     public void switchToGallery() {
-        galleryLayout.resetIndex();
+        galleryLayout.achieveFocus();
 
-        currentScene = galleryScene;
+        currentLayout = galleryLayout;
         switchToLayout();
 
-        galleryScene.setOnKeyPressed(event -> keyController.handleGallery(event));
+        currentScene.setOnKeyPressed(event -> keyController.handleGallery(event));
     }
 
     // create a smoother transition between scenes...
     public void switchToLayout(){
-        primaryStage.setScene(currentScene);
+        primaryStage.getScene().setRoot(currentLayout);
         if (!primaryStage.isShowing())
             primaryStage.show();
         if (primaryStage.isIconified())
@@ -158,23 +161,18 @@ public class ViewFinder extends Application {
 
         String projectName = fileChooser.chooseProjectName(imagePath.getName());
 
+        //catch warning overwriting project!!
+
         if (projectName.equals("")){
             //fileChooser.alertInvalidProjectName();
             primaryStage.setIconified(false);
             return;
         }
-
         globalSettings.newProject(projectName, imagePath);
-        imageHandler.chooseDirectory(imagePath);
-
-        galleryLayout.preload();
-        slideshowLayout.preload();
 
         System.out.println("creating new Project: "+projectName);
 
-        if (currentScene == startScreenScene)
-            switchToSlideshow();
-            //switchToGallery();
+        openProject(new File(projectName));
     }
 
     public void openProject(){
@@ -182,12 +180,18 @@ public class ViewFinder extends Application {
 
         File projectPath = fileChooser.chooseExistingProject();
         if (projectPath == null){
-            fileChooser.alertNoProject();
+            //fileChooser.alertNoProject();
             primaryStage.setIconified(false);
             return;
         }
+        openProject(projectPath);
+    }
 
+    void openProject(File projectPath){
         //assert that imagePath and other variables are successfully read from globalSettings
+        if (!primaryStage.isIconified()){
+            primaryStage.setIconified(true);
+        }
         if (!globalSettings.openProject(projectPath.getName())){
             primaryStage.setIconified(false);
             return;
@@ -199,15 +203,17 @@ public class ViewFinder extends Application {
             primaryStage.setIconified(false);
             return;
         }
+        globalSettings.updateMostRecentProject(projectPath);
+
         galleryLayout.preload();
         slideshowLayout.preload();
 
-        System.out.println("Opening existing Project: "+globalSettings.projectName);
+        System.out.println("Opening Project: "+globalSettings.projectName);
 
         primaryStage.setIconified(false);
-        if (currentScene == startScreenScene)
-            switchToSlideshow();
-            //switchToGallery();
+        if (currentLayout == startScreenLayout)
+            //switchToSlideshow();
+            switchToGallery();
     }
 
 

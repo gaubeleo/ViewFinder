@@ -7,9 +7,11 @@ import java.io.*;
 
 public class GlobalSettings extends ImageSettings{
     private static GlobalSettings instance;
+    private static GlobalSettings onStartSettings;
 
     public boolean fullscreen;
 
+    public File mostRecentProject;
     public File imagePath;
     public int preloadCount;
     public String onStartAction;
@@ -23,12 +25,13 @@ public class GlobalSettings extends ImageSettings{
 
         fullscreen = false;
 
+        mostRecentProject = new File(".");
         imagePath = new File("");
         onStartAction = "Default";
         preloadCount = 2;
 
         //set ImageSettings
-        backgroundColor = Color.gray(0.15);
+        backgroundColor = Color.gray(0.55);
         frameColor = Color.valueOf("#0099e5");
         frameSize = 3;
         hasFrame = true;
@@ -38,10 +41,18 @@ public class GlobalSettings extends ImageSettings{
     }
 
     public static GlobalSettings singleton(){
-        if (instance == null)
+        if (instance == null){
             instance = new GlobalSettings(".");
+            onStartSettings = new GlobalSettings(".");
+        }
 
         return instance;
+    }
+
+
+    public static void updateMostRecentProject(File projectPath){
+        onStartSettings.mostRecentProject = projectPath;
+        onStartSettings.save();
     }
 
     @Override
@@ -66,7 +77,8 @@ public class GlobalSettings extends ImageSettings{
 
     public void writeSettings(PrintWriter fileWriter){
         //handle "null"-Exceptions for primitive types
-
+        if (fileName.compareTo("OnStartSettings.set") == 0)
+            fileWriter.println("mostRecentProject -> "+mostRecentProject.getAbsolutePath());
         if (imagePath != null)
             fileWriter.println("imagePath -> "+imagePath.getAbsolutePath());
         if (fadeDuration != null)
@@ -108,6 +120,8 @@ public class GlobalSettings extends ImageSettings{
     public boolean handleId(String id, String value){
         try{
             switch(id){
+                case "mostRecentProject":
+                   mostRecentProject = new File(value);
                 case "imagePath":
                     imagePath = new File(value);
                     break;
