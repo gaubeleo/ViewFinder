@@ -42,6 +42,11 @@ public class ViewFinder extends Application {
         fileChooser = new FileChooser();
         imageHandler = ImageHandler.singleton();
 
+        //SettingsPanel settingsPanel = SettingsPanel.singleton();
+        //InfoPanel infoPanel = InfoPanel.singleton();
+        MenuPanel menuPanel = MenuPanel.singleton();
+        menuPanel.setViewFinder(this);
+
         startScreenLayout = new StartScreen();
         startScreenLayout.create();
 
@@ -78,8 +83,8 @@ public class ViewFinder extends Application {
     }
 
     public void setupStage(){
-        primaryStage.setMinHeight(600);
-        primaryStage.setMinWidth(800);
+        primaryStage.setMinHeight(800);
+        primaryStage.setMinWidth(1200);
 
         primaryStage.maximizedProperty().addListener((observableValue, was, now)-> {
             if (!now){
@@ -109,6 +114,8 @@ public class ViewFinder extends Application {
     }
 
     public void switchToStartScreen(){
+        if (currentLayout == startScreenLayout)
+            return;
         keyController.setStartScreen(startScreenLayout);
 
         currentLayout = startScreenLayout;
@@ -118,6 +125,8 @@ public class ViewFinder extends Application {
     }
 
     public void switchToSlideshow(){
+        if (currentLayout == slideshowLayout)
+            return;
         slideshowLayout.achieveFocus();
 
         currentLayout = slideshowLayout;
@@ -127,6 +136,8 @@ public class ViewFinder extends Application {
     }
 
     public void switchToGallery() {
+        if (currentLayout == galleryLayout)
+            return;
         galleryLayout.achieveFocus();
 
         currentLayout = galleryLayout;

@@ -9,7 +9,7 @@ import javafx.scene.shape.Rectangle;
 
 import java.util.Vector;
 
-public class Gallery extends BorderPane {
+public class Gallery extends BorderPane{
 
     private final GlobalSettings globalSettings;
     private final ImageHandler imageHandler;
@@ -17,7 +17,7 @@ public class Gallery extends BorderPane {
 
     private SettingsPanel settings;
     private InfoPanel info;
-    private Menu menu;
+    private MenuPanel menuPanel;
 
     ////////////////////////////////////
 
@@ -59,12 +59,13 @@ public class Gallery extends BorderPane {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Vertical scroll bar
         scrollPane.setFitToWidth(true);
         scrollPane.setContent(flowLayout);
+        scrollPane.setStyle("-fx-background-color:transparent;");
 
         settings = SettingsPanel.singleton();
         info = InfoPanel.singleton();
-        menu = Menu.singleton();
+        menuPanel = MenuPanel.singleton();
 
-        setTop(menu);
+        setTop(menuPanel);
         setCenter(scrollPane);
         setLeft(settings);
         setRight(info);
@@ -88,15 +89,24 @@ public class Gallery extends BorderPane {
         }).start();
     }
 
+
+    public void updateSize(){
+        flowLayout.autosize();
+        autosize();
+    }
+
     public void achieveFocus(){
         backgroundHandler.setRoot(flowLayout);
         backgroundHandler.setCurrentBC(Color.WHITE);
+        backgroundHandler.setNextBC(Color.WHITE);
 
-        menu.setActive("gallery");
+        menuPanel.setActive("gallery");
 
-        setTop(menu);
+        setTop(menuPanel);
         setLeft(settings);
         setRight(info);
+
+        updateSize();
     }
 
     public void preload(){

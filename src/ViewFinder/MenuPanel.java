@@ -10,18 +10,21 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 
-public class Menu  extends HBox {
-    private static Menu instance;
+public class MenuPanel extends HBox {
+    private static MenuPanel instance;
+
+    private Pane galleryLabelPane;
+    private Pane slideshowLabelPane;
 
     private Line galleryLine;
     private Line slideshowLine;
 
-    Line line;
 
-    private Menu(){
+    private MenuPanel(){
         super();
+
         setStyle("-fx-background-color: rgb(255, 255, 255);");
-        setPadding(new Insets(20, 100, 0, 100));
+        setPadding(new Insets(20, 0, 0, 0));
         setSpacing(100);
         setAlignment(Pos.CENTER);
 
@@ -50,28 +53,34 @@ public class Menu  extends HBox {
         slideshowLine.setStrokeWidth(3);
         slideshowLine.setVisible(false);
 
-        galleryLabel.widthProperty().addListener((observable, oldValue, newValue) ->{
+        galleryLabel.widthProperty().addListener((observable, oldValue, newValue)->{
             galleryLine.setEndX(newValue.doubleValue());
         });
-        slideshowLabel.widthProperty().addListener((observable, oldValue, newValue) ->{
+        slideshowLabel.widthProperty().addListener((observable, oldValue, newValue)->{
             slideshowLine.setEndX(newValue.doubleValue());
         });
 
-        Pane galleryLabelPane = new Pane(galleryLabel, galleryLine);
-        Pane slideshowLabelPane = new Pane(slideshowLabel, slideshowLine);
+        galleryLabelPane = new Pane(galleryLabel, galleryLine);
+        slideshowLabelPane = new Pane(slideshowLabel, slideshowLine);
 
         getChildren().add(galleryLabelPane);
         getChildren().add(slideshowLabelPane);
-
-        line = new Line();
-
-        getChildren().add(line);
     }
 
-    public static Menu singleton(){
+    public static MenuPanel singleton(){
         if (instance == null)
-            instance = new Menu();
+            instance = new MenuPanel();
         return instance;
+    }
+
+    //clickable Labels!!
+    public void setViewFinder(ViewFinder vf){
+        galleryLabelPane.setOnMousePressed(e->{
+            vf.switchToGallery();
+        });
+        slideshowLabelPane.setOnMousePressed(e->{
+            vf.switchToSlideshow();
+        });
     }
 
     public void setActive(String choice){

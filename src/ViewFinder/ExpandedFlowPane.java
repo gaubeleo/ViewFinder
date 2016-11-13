@@ -3,6 +3,7 @@ package ViewFinder;
 import javafx.geometry.Orientation;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.FlowPane;
 
@@ -14,10 +15,18 @@ public class ExpandedFlowPane extends FlowPane {
     public ExpandedFlowPane(){
         super();
 
-        globalSettings = GlobalSettings.singleton();
-        widthProperty().addListener((observable, oldValue, newValue) -> {
-            expandToWidth();
-        });
+//        globalSettings = GlobalSettings.singleton();
+//        .addListener((observable, oldValue, newValue) -> {
+//            System.out.println(oldValue);
+//
+//            expandToWidth();
+//        });
+    }
+
+    @Override
+    protected void layoutChildren() {
+        expandToWidth();
+        super.layoutChildren();
     }
 
     public void clear(){
@@ -28,12 +37,12 @@ public class ExpandedFlowPane extends FlowPane {
         return (Thumbnail) getChildren().get(i);
     }
 
-    public void expandToWidth(){
+    public synchronized void expandToWidth(){
         // currently only works for Horizontal FlowPanes
         assert(getOrientation() == Orientation.HORIZONTAL);
         assert(getWidth() > 0);
 
-        double maxRunLength = getWidth()-(getInsets().getLeft()+getInsets().getRight())- 6;
+        double maxRunLength = getWidth()-(getInsets().getLeft()+getInsets().getRight());
         double currentRunLength = 0.;
         int firstRowIndex = 0;
 
@@ -42,23 +51,36 @@ public class ExpandedFlowPane extends FlowPane {
         //automatically ignores last row!
         int i;
         for (i=0; i<children.size(); i++) {
-            ImageView child = (ImageView) children.get(i);
-            child.setFitHeight(300);
-            if (child.isManaged()) {
-                double childWidth = child.getLayoutBounds().getWidth();
-                if (currentRunLength + childWidth + (i-firstRowIndex)*getHgap() <= maxRunLength)
-                    currentRunLength += childWidth;
-                else {
-                    double ratio = currentRunLength/(maxRunLength-(getHgap()*((i-1)-firstRowIndex)));
-                    double newHeight = 300/ratio;
+            Image img = ((ImageView)children.get(i)).getImage();
+            if (img == null)
+                continue;
+            //double ratio = img.getWidth()/img.getHeight();
+            double childWidth = img.getWidth();
 
-                    for (int j=firstRowIndex; j<i; j++){
-                        ImageView iv = (ImageView) children.get(j);
-                        iv.setFitHeight(newHeight);
-                    }
-                    currentRunLength = childWidth;
-                    firstRowIndex = i;
+            if (currentRunLength + childWidth + (i-firstRowIndex)*getHgap() <= maxRunLength)
+                currentRunLength += childWidth;
+            else {
+                double newRatio = currentRunLength/(maxRunLength-(getHgap()*((i-1)-firstRowIndex)));
+                double newHeight = 300./newRatio;
+
+                double total =0.;
+                for (int j=firstRowIndex; j<i; j++){
+                    Thumbnail thumbnail = (Thumbnail) children.get(j);
+                    thumbnail.setFitHeight(newHeight);
+                    total += thumbnail.getBoundsInParent().getWidth();
                 }
+                ImageView ivv = (ImageView) children.get(i-1);
+                ivv.setFitHeight(newHeight-3);
+                total =0.;
+
+                for (int j=firstRowIndex; j<i; j++){
+                    ImageView iv = (ImageView) children.get(j);
+                    total+= iv.getBoundsInParent().getWidth();
+                }
+                //System.out.println(maxRunLength - (total+getHgap()*((i-1)-firstRowIndex)));
+                
+                currentRunLength = childWidth;
+                firstRowIndex = i;
             }
         }
 /*        double ratio = currentRunLength/(maxRunLength-(getHgap()*((i-1)-firstRowIndex)));

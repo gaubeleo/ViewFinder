@@ -1,9 +1,9 @@
 package ViewFinder;
 
+import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Transition;
 import javafx.geometry.Insets;
-import javafx.scene.CacheHint;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
@@ -17,7 +17,7 @@ public class Slideshow extends BorderPane {
     private ImageViewPane imageContainer;
     private SettingsPanel settings;
     private InfoPanel info;
-    private Menu menu;
+    private MenuPanel menuPanel;
 
     ////////////////////////////////////
 
@@ -50,8 +50,6 @@ public class Slideshow extends BorderPane {
 
     public void create(){
         // Background and Frame Handler
-        System.out.println(globalSettings.backgroundColor.getRed());
-        
         backgroundHandler = BackgroundHandler.singleton(globalSettings.backgroundColor);
         frame = backgroundHandler.createFrame(globalSettings.frameSize);
 
@@ -60,8 +58,8 @@ public class Slideshow extends BorderPane {
         image.setImage(imageHandler.get(index));
         image.setPreserveRatio(true);
         image.setSmooth(true);
-        image.setCache(true);
-        image.setCacheHint(CacheHint.SPEED);
+        //image.setCache(true);
+        //image.setCacheHint(CacheHint.SPEED);
 
         imageContainer = new ImageViewPane();
         imageContainer.setImageView(image);
@@ -69,9 +67,9 @@ public class Slideshow extends BorderPane {
 
         settings = SettingsPanel.singleton();
         info = InfoPanel.singleton();
-        menu = Menu.singleton();
+        menuPanel = MenuPanel.singleton();
 
-        setTop(menu);
+        setTop(menuPanel);
         setCenter(imageContainer);
         setLeft(settings);
         setRight(info);
@@ -120,11 +118,14 @@ public class Slideshow extends BorderPane {
         backgroundHandler.setRoot(this);
         backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index+1)));
 
-        menu.setActive("slideshow");
+        menuPanel.setActive("slideshow");
 
-        setTop(menu);
+        setTop(menuPanel);
         setLeft(settings);
         setRight(info);
+
+        imageContainer.autosize();
+        autosize();
     }
 
     public void preload(){
@@ -141,6 +142,8 @@ public class Slideshow extends BorderPane {
 
 
     public void next(){
+        if (imageFade.statusProperty().get() != Animation.Status.STOPPED)
+            return;
         backgroundHandler.setNextBC(imageHandler.getBackgroundColor(getRealIndex(index+1)));
 
         imageFade.play();

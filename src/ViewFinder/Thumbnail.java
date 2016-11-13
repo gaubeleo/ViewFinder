@@ -24,7 +24,6 @@ public class Thumbnail extends ImageView {
     }
 
     public void createAnimations(){
-
         fadeIn = new FadeTransition(globalSettings.fadeDuration, this);
         fadeIn.setFromValue(0.0);
         fadeIn.setToValue(1.0);
@@ -48,4 +47,5 @@ public class Thumbnail extends ImageView {
             //scaleIn.play();
         });
     }
+
 }
