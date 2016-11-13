@@ -1,10 +1,14 @@
 package ViewFinder;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.*;
 import javafx.scene.shape.Rectangle;
 
 import java.util.Vector;
@@ -21,10 +25,11 @@ public class Gallery extends BorderPane{
 
     ////////////////////////////////////
 
-    protected ScrollPane scrollPane;
-    protected ExpandedFlowPane flowLayout;
+    private ScrollPane scrollPane;
+    private ExpandedFlowPane flowLayout;
 
-    protected Vector<Rectangle> frames;
+    private Vector<Thumbnail> thumbnails;
+    private Vector<Rectangle> frames;
 
     ////////////////////////////////////
 
@@ -38,7 +43,8 @@ public class Gallery extends BorderPane{
         this.globalSettings = GlobalSettings.singleton();
         this.imageHandler = ImageHandler.singleton();
 
-        frames = new Vector<Rectangle>();;
+        thumbnails = new Vector<Thumbnail>(100);
+        frames = new Vector<Rectangle>(100);
     }
 
     public void create(){
@@ -50,7 +56,7 @@ public class Gallery extends BorderPane{
         flowLayout = new ExpandedFlowPane();
         flowLayout.prefWidthProperty().bind(widthProperty());
 
-        flowLayout.setAlignment(Pos.BASELINE_LEFT);
+        flowLayout.setAlignment(Pos.BASELINE_CENTER);
         flowLayout.setPadding(new Insets(15, 65, 15, 65));
         flowLayout.setHgap(15);
         flowLayout.setVgap(15);
@@ -65,17 +71,42 @@ public class Gallery extends BorderPane{
         info = InfoPanel.singleton();
         menuPanel = MenuPanel.singleton();
 
+        addWidthChangeListeners();
+
         setTop(menuPanel);
         setCenter(scrollPane);
         setLeft(settings);
         setRight(info);
     }
 
+    public void addWidthChangeListeners(){
+        widthProperty().addListener((observable, oldValue, newValue) -> {
+            fitToWidth();
+        });
+        scrollPane.widthProperty().addListener((observable, oldValue, newValue) -> {
+            fitToWidth();
+        });
+        settings.widthProperty().addListener((observable, oldValue, newValue) -> {
+            fitToWidth();
+        });
+        info.widthProperty().addListener((observable, oldValue, newValue) -> {
+            fitToWidth();
+        });
+    }
+
+    public void fitToWidth(){
+        if (getScene() == null)
+            return;
+        double fullRunLength = getScene().getWidth() - (settings.getWidth() + info.getWidth());
+        Platform.runLater(()->flowLayout.fitToWidth(fullRunLength));
+    }
+
     public void newImageSet(){
         flowLayout.clear();
+        thumbnails.clear();
+        frames.clear();
         for (int i=0; i<imageHandler.getFileCount(); i++) {
-            Thumbnail thumbnail = new Thumbnail(flowLayout);
-            flowLayout.getChildren().add(thumbnail);
+            thumbnails.add(new Thumbnail(flowLayout));
         }
     }
 
@@ -83,15 +114,17 @@ public class Gallery extends BorderPane{
         newImageSet();
         new Thread(() -> {
             for (int i=0; i< imageHandler.getFileCount(); i++){
-                Thumbnail thumbnail = flowLayout.getChild(i);
-                thumbnail.show(imageHandler.getThumbnail(i));
+                Thumbnail thumbnail = thumbnails.get(i);
+                thumbnail.setImg(imageHandler.getThumbnail(i));
+                Platform.runLater(()->flowLayout.addNode(thumbnail));
+                thumbnail.show();
             }
         }).start();
     }
 
-
     public void updateSize(){
-        flowLayout.autosize();
+        //flowLayout.autosize();
+        //flowLayout.fitToWidth();
         autosize();
     }
 

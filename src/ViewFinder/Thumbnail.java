@@ -12,10 +12,13 @@ public class Thumbnail extends ImageView {
 
     private FadeTransition fadeIn;
     private ScaleTransition scaleIn;
+    private double ratio;
 
     public Thumbnail(ExpandedFlowPane flowLayout){
         globalSettings = GlobalSettings.singleton();
         parent = flowLayout;
+
+        ratio = 0.;
 
         setPreserveRatio(true);
         setSmooth(true);
@@ -35,17 +38,20 @@ public class Thumbnail extends ImageView {
         scaleIn.setToY(1.0);
 
         scaleIn.setOnFinished(e->{
-            parent.expandToWidth();
+            //parent.fitToWidth();
         });
     }
-
-    public void show(Image thumbnail) {
-        Platform.runLater(()->{
-            setImage(thumbnail);
-            parent.expandToWidth();
-            fadeIn.play();
-            //scaleIn.play();
-        });
+    public void setImg(Image img){
+        setImage(img);
+        ratio = img.getWidth()/img.getHeight();
     }
 
+    public void show() {
+        fadeIn.play();
+        scaleIn.play();
+    }
+
+    public double getRatio(){
+        return ratio;
+    }
 }

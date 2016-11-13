@@ -37,7 +37,7 @@ public class GlobalSettings extends ImageSettings{
         hasFrame = true;
 
         panelColor = Color.gray(0.25);
-        fadeDuration = new Duration(350);
+        fadeDuration = new Duration(500);
     }
 
     public static GlobalSettings singleton(){
