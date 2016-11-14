@@ -67,13 +67,18 @@ public class BackgroundHandler {
         return fadeBC;
     }
 
-    public void setCurrentBC(Color currentBC){
-        this.currentBC = currentBC;
-        root.setStyle(String.format("-fx-background-color: #%s;", currentBC.toString().substring(2, 8)));
+    public void setCurrentBC(Color color){
+        if (color == null)
+            return;
+        this.currentBC = color;
+        if (root != null)
+            root.setStyle(String.format("-fx-background-color: #%s;", currentBC.toString().substring(2, 8)));
     }
 
-    public void setNextBC(Color nextBC){
-        this.nextBC = nextBC;
+    public void setNextBC(Color color){
+        if (color == null)
+            return;
+        this.nextBC = color;
     }
 
     public void adjustFrameColor(){

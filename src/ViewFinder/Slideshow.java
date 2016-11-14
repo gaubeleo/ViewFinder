@@ -9,10 +9,16 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.util.Vector;
+
 public class Slideshow extends BorderPane {
+    private final ViewFinder vf;
     private final GlobalSettings globalSettings;
     private final ImageHandler imageHandler;
     private BackgroundHandler backgroundHandler;
+    private Thread backgroundThread;
+
+    ////////////////////////////////////
 
     private ImageViewPane imageContainer;
     private SettingsPanel settings;
@@ -40,7 +46,8 @@ public class Slideshow extends BorderPane {
 
     ////////////////////////////////////
 
-    Slideshow(){
+    Slideshow(ViewFinder vf){
+        this.vf = vf;
         this.index = 0;
         this.preloadCount = 2;
 
@@ -110,11 +117,10 @@ public class Slideshow extends BorderPane {
         backgroundFade = backgroundHandler.fadeBackground(duration.multiply(2));
     }
 
-    public void resetIndex(){
-        index = 0;
-    }
+    public void achieveFocus(int index){
+        if (index != this.index)
+            skipTo(index);
 
-    public void achieveFocus(){
         backgroundHandler.setRoot(this);
         backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index+1)));
 
@@ -128,8 +134,24 @@ public class Slideshow extends BorderPane {
         autosize();
     }
 
+    private void skipTo(int index) {
+        preload(index);
+    }
+
     public void preload(){
-        resetIndex();
+        preload(0);
+    }
+
+    public void preload(int index){
+        assert(index < imageHandler.getFileCount());
+        this.index = index;
+
+        Vector<Integer> exceptions = new Vector<Integer>(preloadCount*2+1);
+        for (int offset = -preloadCount; offset <= preloadCount; offset++){
+            exceptions.add(getRealIndex(index+offset));
+        }
+        imageHandler.dropAll(exceptions);
+
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             if (offset == 0){
                 imageHandler.preload(getRealIndex(index));
@@ -138,6 +160,8 @@ public class Slideshow extends BorderPane {
             else
                 imageHandler.preloadThreaded(getRealIndex(index+offset));
         }
+        backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(index));
+        backgroundHandler.setNextBC(imageHandler.getBackgroundColor(index));
     }
 
 
@@ -152,8 +176,7 @@ public class Slideshow extends BorderPane {
 
         increase_index();
 
-        imageHandler.drop(getRealIndex((index-1)-preloadCount));
-        imageHandler.preloadThreaded(getRealIndex(index+preloadCount));
+        dropPreload(getRealIndex((index-1)-preloadCount), getRealIndex(index+preloadCount));
     }
 
     public void previous(){
@@ -165,8 +188,33 @@ public class Slideshow extends BorderPane {
 
         reduce_index();
 
-        imageHandler.drop(getRealIndex((index+1)+preloadCount));
-        imageHandler.preloadThreaded(getRealIndex(index-preloadCount));
+        dropPreload(getRealIndex((index+1)+preloadCount), getRealIndex(index-preloadCount));
+    }
+
+    public void dropPreload(int dropIndex, int preloadIndex){
+        if (backgroundThread != null) {
+            try {
+                backgroundThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        backgroundThread = new Thread(()->{
+            imageHandler.drop(dropIndex);
+            imageHandler.preloadThreaded(preloadIndex);
+        });
+        backgroundThread.start();
+    }
+
+    public void killBackgroundThread(){
+        if (backgroundThread != null && backgroundThread.isAlive()){
+            backgroundThread.stop();
+            try {
+                backgroundThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void darkenBackground(){
@@ -206,5 +254,9 @@ public class Slideshow extends BorderPane {
             return i-imageHandler.getFileCount();
         }
         return i;
+    }
+
+    public int getIndex() {
+        return index;
     }
 }

@@ -51,10 +51,10 @@ public class ViewFinder extends Application {
         startScreenLayout = new StartScreen();
         startScreenLayout.create();
 
-        galleryLayout = new Gallery();
+        galleryLayout = new Gallery(this);
         galleryLayout.create();
 
-        slideshowLayout = new Slideshow();
+        slideshowLayout = new Slideshow(this);
         slideshowLayout.create();
 
         keyController = KeyController.singleton(this);
@@ -126,9 +126,13 @@ public class ViewFinder extends Application {
     }
 
     public void switchToSlideshow(){
+        switchToSlideshow(0);
+    }
+
+    public void switchToSlideshow(int index){
         if (currentLayout == slideshowLayout)
             return;
-        slideshowLayout.achieveFocus();
+        slideshowLayout.achieveFocus(index);
 
         currentLayout = slideshowLayout;
         switchToLayout();
@@ -136,10 +140,14 @@ public class ViewFinder extends Application {
         currentScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
     }
 
-    public void switchToGallery() {
+    public void switchToGallery(){
+        switchToGallery(0);
+    }
+
+    public void switchToGallery(int index) {
         if (currentLayout == galleryLayout)
             return;
-        galleryLayout.achieveFocus();
+        galleryLayout.achieveFocus(index);
 
         currentLayout = galleryLayout;
         switchToLayout();
@@ -173,15 +181,13 @@ public class ViewFinder extends Application {
 
         String projectName = fileChooser.chooseProjectName(imagePath.getName());
 
-        //catch warning overwriting project!!
-
+        //catch warning overwriting project!! --> copy to last Overwritten-Project in Backups
         if (projectName.equals("")){
             //fileChooser.alertInvalidProjectName();
             primaryStage.setIconified(false);
             return;
         }
         globalSettings.newProject(projectName, imagePath);
-
         System.out.println("creating new Project: "+projectName);
 
         openProject(new File(projectName));
@@ -209,19 +215,23 @@ public class ViewFinder extends Application {
             return;
         }
 
-        if (!imageHandler.chooseDirectory(globalSettings.imagePath)) {
-            //should not happen since it is a already existing project, except if real images are no longer accessible
-            fileChooser.alertMissingImages(); //--> offer to select new location of images
-            primaryStage.setIconified(false);
-            return;
-        }
+//        if (!imageHandler.chooseDirectory(globalSettings.imagePath)) {
+//            //should not happen since it is a already existing project, except if real images are no longer accessible
+//            fileChooser.alertMissingImages(); //--> offer to select new location of images
+//            primaryStage.setIconified(false);
+//            return;
+//        }
         globalSettings.updateMostRecentProject(projectPath);
+
+        galleryLayout.killBackgroundThread();
+        slideshowLayout.killBackgroundThread();
+        imageHandler.chooseDirectory(globalSettings.imagePath);
 
         galleryLayout.preload();
         slideshowLayout.preload();
 
-        System.out.println("Opening Project: "+globalSettings.projectName);
 
+        System.out.println("Opening Project: "+globalSettings.projectName);
         primaryStage.setIconified(false);
         if (currentLayout == startScreenLayout)
             //switchToSlideshow();

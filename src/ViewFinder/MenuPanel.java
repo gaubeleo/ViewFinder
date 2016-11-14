@@ -24,7 +24,7 @@ public class MenuPanel extends HBox {
         super();
 
         setStyle("-fx-background-color: rgb(255, 255, 255);");
-        setPadding(new Insets(20, 0, 0, 0));
+        setPadding(new Insets(15, 0, 0, 0));
         setSpacing(100);
         setAlignment(Pos.CENTER);
 
@@ -75,10 +75,10 @@ public class MenuPanel extends HBox {
 
     //clickable Labels!!
     public void setViewFinder(ViewFinder vf){
-        galleryLabelPane.setOnMousePressed(e->{
+        galleryLabelPane.setOnMouseClicked(e->{
             vf.switchToGallery();
         });
-        slideshowLabelPane.setOnMousePressed(e->{
+        slideshowLabelPane.setOnMouseClicked(e->{
             vf.switchToSlideshow();
         });
     }

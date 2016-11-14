@@ -67,7 +67,7 @@ public class ImageHandler {
     public void addAll(File[] fileArray){
         for (File file : fileArray){
             files.add(file);
-
+            
             ImageSettings imageSettings = new ImageSettings(file.getName(), globalSettings.projectName);
             imageSettings.load();
             settings.put(file, imageSettings);
@@ -76,7 +76,6 @@ public class ImageHandler {
                 imageSettings.backgroundColor = Color.gray(random.nextDouble());
                 imageSettings.save();
             }
-
             images.put(file, null);
             thumbnails.put(file, null);
             threads.put(file, null);
@@ -88,9 +87,6 @@ public class ImageHandler {
     public void setFiles(File[] fileArray){
         clear();
         addAll(fileArray);
-
-        //TEMP
-        preloadThreaded(0);
     }
 
     public boolean isEmpty(File path){
@@ -186,7 +182,9 @@ public class ImageHandler {
         if (thumbnails.get(file) != null)
             return true;
         try {
-            thumbnails.put(file, new Image(new FileInputStream(file), 0, 250, true, true));
+            Image img = new Image(new FileInputStream(file), 0, 350, true, true);
+            if (thumbnails.containsKey(file))
+                thumbnails.put(file, img);
             return true;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -205,11 +203,15 @@ public class ImageHandler {
             return;
 
         try {
-            images.put(file, new Image(new FileInputStream(file)));
+            Image img = new Image(new FileInputStream(file));
+            images.put(file, img);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (OutOfMemoryError e){
-            e.printStackTrace();
+            System.gc();
+            System.out.println("WARNING: Out of Memory");
+            //preload(file);
+            //e.printStackTrace();
         }
     }
 
@@ -239,6 +241,16 @@ public class ImageHandler {
         System.gc();
     }
 
+    public void dropAll(Vector<Integer> exceptions) {
+        for (int i : exceptions)
+            assert(i < getFileCount());
+
+        for (int i=0; i<getFileCount(); i++){
+            if (!exceptions.contains(i))
+                drop(i);
+        }
+    }
+
     public Image get(int index){
         if (index >= getFileCount())
             return null;
@@ -265,8 +277,9 @@ public class ImageHandler {
     }
 
     public Image getThumbnail(int index) {
-        if (index >= getFileCount())
+        if (index >= getFileCount()) {
             return null;
+        }
         return getThumbnail(files.get(index));
     }
 

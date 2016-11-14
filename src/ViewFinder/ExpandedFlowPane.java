@@ -1,5 +1,7 @@
 package ViewFinder;
 
+import javafx.collections.ObservableList;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -33,13 +35,17 @@ class Run extends HBox {
     }
 
     public synchronized boolean addNode(Thumbnail thumbnail){
+        return addNode(size, thumbnail);
+    }
+
+    public synchronized boolean addNode(int index, Thumbnail thumbnail){
         double thumbnailMinWidth = minHeight * thumbnail.getRatio();
         if (minRunLength + totalSpacing + getSpacing() + thumbnailMinWidth <= maxRunLength || size == 0){
             size++;
             minRunLength += thumbnailMinWidth;
             totalSpacing += getSpacing();
             
-            getChildren().add(thumbnail);
+            getChildren().add(index, thumbnail);
             fitToWidth();
             return true;
         }
@@ -57,25 +63,9 @@ class Run extends HBox {
         return nextRun.addNode(thumbnail);
     }
 
-    public synchronized void fitToWidth(){
-        double curRatio = (maxRunLength-totalSpacing) / minRunLength;
-        if ((nextRun == null || nextRun.getSize() == 0) && curRatio > 2.)
-            return;
 
-        curHeight = curRatio * minHeight;
-
-        curRunLength = 0.;
-        for (Node node : getChildren()) {
-            Thumbnail thumbnail = (Thumbnail) node;
-            thumbnail.setFitHeight(curHeight);
-            curRunLength += thumbnail.getRatio() * curHeight;
-        }
-    }
-
-    public synchronized void setVgap(double value){
-        setSpacing(value);
-        this.totalSpacing = size*getSpacing();
-        while (minRunLength+totalSpacing > maxRunLength){
+    public synchronized void pushToFirst(Thumbnail thumbnail){
+        while (!addNode(0, thumbnail)){
             popLast();
         }
     }
@@ -86,6 +76,7 @@ class Run extends HBox {
         boolean success = addNode(nextRun.popFirst());
         assert(success);
     }
+
     public synchronized Thumbnail popFirst(){
         assert(size > 0);
         Thumbnail thumbnail = (Thumbnail) getChildren().get(0);
@@ -115,22 +106,50 @@ class Run extends HBox {
         nextRun.pushToFirst(thumbnail);
     }
 
-    public synchronized void pushToFirst(Thumbnail thumbnail){
-        boolean success = addNode(thumbnail);
-        while(!success){
-            popLast();
-            success = addNode(thumbnail);
-        }
-        thumbnail.toFront();
-    }
+    public synchronized void fitToWidth(){
+        double curRatio = (maxRunLength-totalSpacing) / minRunLength;
+        if ((nextRun == null || nextRun.getSize() == 0) && curRatio > 2.)
+            return;
 
+        curHeight = curRatio * minHeight;
+
+        curRunLength = 0.;
+        for (Node node : getChildren()) {
+            Thumbnail thumbnail = (Thumbnail) node;
+            thumbnail.setFitHeight(curHeight);
+            curRunLength += thumbnail.getRatio() * curHeight;
+        }
+    }
 
     public synchronized void changeMaxRunLength(double maxRunLength) {
         this.maxRunLength = maxRunLength;
         if (abs(oldRunLength-maxRunLength) > 200)
             oldRunLength = maxRunLength;
-            lay();
+            relayout();
         fitToWidth();
+    }
+    
+    public synchronized void relayout(){
+        if (nextRun != null){
+            while (nextRun.getSize() > 0 && minRunLength + totalSpacing + getSpacing() + nextRun.getFirstMinWidth() <= maxRunLength){
+                pullNext();
+            }
+            while (minRunLength+totalSpacing > maxRunLength){
+                popLast();
+            }
+        }
+    }
+
+    public void setNextRun(Run nextRun) {
+        this.nextRun = nextRun;
+    }
+
+    public synchronized void setVgap(double value){
+        setSpacing(value);
+        this.totalSpacing = size*getSpacing();
+        while (minRunLength+totalSpacing > maxRunLength){
+            popLast();
+        }
     }
 
     public int getSize(){
@@ -144,27 +163,6 @@ class Run extends HBox {
     public double getFirstMinWidth(){
         assert(getChildren().size() == size);
         return ((Thumbnail)getChildren().get(0)).getRatio()*minHeight;
-    }
-
-    public synchronized void lay(){
-        if (nextRun != null){
-            while (nextRun.getSize() > 0 && minRunLength + totalSpacing + getSpacing() + nextRun.getFirstMinWidth() <= maxRunLength){
-                pullNext();
-            }
-            while (minRunLength+totalSpacing > maxRunLength){
-                popLast();
-            }
-        }
-    }
-
-    @Override
-    protected void layoutChildren() {
-        //lay();
-        super.layoutChildren();
-    }
-
-    public void setNextRun(Run nextRun) {
-        this.nextRun = nextRun;
     }
 }
 
@@ -180,7 +178,7 @@ public class ExpandedFlowPane extends VBox {
         super();
 
         Vgap = 0.;
-        minHeight = 250.;
+        minHeight = 300.;
 //        maxRunLength = getWidth()-(getInsets().getLeft()+getInsets().getRight());
         maxRunLength = 1900;
 

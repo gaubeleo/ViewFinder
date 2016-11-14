@@ -2,7 +2,7 @@ package ViewFinder;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
-import javafx.application.Platform;
+import javafx.scene.CacheHint;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
@@ -13,10 +13,13 @@ public class Thumbnail extends ImageView {
     private FadeTransition fadeIn;
     private ScaleTransition scaleIn;
     private double ratio;
+    private int index;
 
-    public Thumbnail(ExpandedFlowPane flowLayout){
+    public Thumbnail(ExpandedFlowPane flowLayout, int index){
+        this.index = index;
+        this.parent = flowLayout;
+
         globalSettings = GlobalSettings.singleton();
-        parent = flowLayout;
 
         ratio = 0.;
 
@@ -24,6 +27,9 @@ public class Thumbnail extends ImageView {
         setSmooth(true);
 
         createAnimations();
+
+        setCache(true);
+        setCacheHint(CacheHint.SCALE);
     }
 
     public void createAnimations(){

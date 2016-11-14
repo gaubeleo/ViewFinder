@@ -52,7 +52,7 @@ public class KeyController {
     public void handleGallery(KeyEvent e){
         switch (e.getCode()) {
             case ESCAPE:
-                vf.switchToSlideshow();
+                vf.switchToSlideshow(gallery.getIndex());
                 break;
             case UP:
                 gallery.scrollUp();
@@ -71,7 +71,7 @@ public class KeyController {
     public void handleSlideshow(KeyEvent e){
         switch (e.getCode()) {
             case ESCAPE:
-                vf.switchToGallery();
+                vf.switchToGallery(slideshow.getIndex());
                 break;
             case LEFT:
                 slideshow.previous();

@@ -4,20 +4,19 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.*;
 import javafx.scene.shape.Rectangle;
 
 import java.util.Vector;
 
 public class Gallery extends BorderPane{
-
+    private final ViewFinder vf;
     private final GlobalSettings globalSettings;
     private final ImageHandler imageHandler;
     private BackgroundHandler backgroundHandler;
+    private Thread backgroundThread;
 
     private SettingsPanel settings;
     private InfoPanel info;
@@ -37,7 +36,8 @@ public class Gallery extends BorderPane{
 
     ////////////////////////////////////
 
-    Gallery(){
+    Gallery(ViewFinder vf){
+        this.vf = vf;
         this.index = 0;
 
         this.globalSettings = GlobalSettings.singleton();
@@ -101,25 +101,48 @@ public class Gallery extends BorderPane{
         Platform.runLater(()->flowLayout.fitToWidth(fullRunLength));
     }
 
-    public void newImageSet(){
+    public void newImageSet() {
         flowLayout.clear();
         thumbnails.clear();
         frames.clear();
+        System.gc();
         for (int i=0; i<imageHandler.getFileCount(); i++) {
-            thumbnails.add(new Thumbnail(flowLayout));
+            Thumbnail thumbnail = new Thumbnail(flowLayout, i);
+            thumbnails.add(thumbnail);
         }
     }
 
     public void addThumbnailsThreaded(){
         newImageSet();
-        new Thread(() -> {
+        backgroundThread = new Thread(() -> {
             for (int i=0; i< imageHandler.getFileCount(); i++){
                 Thumbnail thumbnail = thumbnails.get(i);
-                thumbnail.setImg(imageHandler.getThumbnail(i));
+                Image img = imageHandler.getThumbnail(i);
+                if (img == null)
+                    break;
+                thumbnail.setImg(img);
+
+                final int _i = i;
+                thumbnail.setOnMouseClicked(e->{
+                    vf.switchToSlideshow(_i);
+                });
+
                 Platform.runLater(()->flowLayout.addNode(thumbnail));
                 thumbnail.show();
             }
-        }).start();
+        });
+        backgroundThread.start();
+    }
+
+    public void killBackgroundThread(){
+        if (backgroundThread != null && backgroundThread.isAlive()){
+            backgroundThread.stop();
+            try {
+                backgroundThread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void updateSize(){
@@ -128,7 +151,9 @@ public class Gallery extends BorderPane{
         autosize();
     }
 
-    public void achieveFocus(){
+    public void achieveFocus(int index){
+        this.index = index;
+
         backgroundHandler.setRoot(flowLayout);
         backgroundHandler.setCurrentBC(Color.WHITE);
         backgroundHandler.setNextBC(Color.WHITE);
@@ -216,6 +241,10 @@ public class Gallery extends BorderPane{
             return i-imageHandler.getFileCount();
         }
         return i;
+    }
+
+    public int getIndex() {
+        return index;
     }
 }
 
