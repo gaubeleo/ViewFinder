@@ -11,6 +11,8 @@ import javafx.util.Duration;
 
 import java.util.Vector;
 
+import static java.lang.Double.MAX_VALUE;
+
 public class Slideshow extends BorderPane {
     private final ViewFinder vf;
     private final GlobalSettings globalSettings;
@@ -122,8 +124,10 @@ public class Slideshow extends BorderPane {
             skipTo(index);
 
         backgroundHandler.setRoot(this);
-        backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index+1)));
+        backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index)));
+        backgroundHandler.resetNextBC();
 
+        menuPanel.setMaxWidth(MAX_VALUE);
         menuPanel.setActive("slideshow");
 
         setTop(menuPanel);
@@ -154,14 +158,13 @@ public class Slideshow extends BorderPane {
 
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             if (offset == 0){
+                // should be threaded and on threadFinish --> fadeIn || use scaled thumbnai
                 imageHandler.preload(getRealIndex(index));
                 image.setImage(imageHandler.get(index));
             }
             else
                 imageHandler.preloadThreaded(getRealIndex(index+offset));
         }
-        backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(index));
-        backgroundHandler.setNextBC(imageHandler.getBackgroundColor(index));
     }
 
 
@@ -208,7 +211,7 @@ public class Slideshow extends BorderPane {
 
     public void killBackgroundThread(){
         if (backgroundThread != null && backgroundThread.isAlive()){
-            backgroundThread.stop();
+            backgroundThread.interrupt();
             try {
                 backgroundThread.join();
             } catch (InterruptedException e) {

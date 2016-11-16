@@ -61,7 +61,6 @@ public class ViewFinder extends Application {
         keyController.setGallery(galleryLayout);
         keyController.setSlideshow(slideshowLayout);
 
-        currentLayout = startScreenLayout;
         //switchToStartScreen();
 
         setupStage();
@@ -109,7 +108,9 @@ public class ViewFinder extends Application {
         primaryStage.setOnCloseRequest(e -> exit());
 
         Rectangle2D screenSize = Screen.getPrimary().getVisualBounds();
-        currentScene = new Scene(currentLayout, screenSize.getWidth(), screenSize.getHeight());
+
+        //should be currentLayout!!!!!!
+        currentScene = new Scene(startScreenLayout, screenSize.getWidth(), screenSize.getHeight());
 
         primaryStage.setScene(currentScene);
     }
@@ -210,7 +211,9 @@ public class ViewFinder extends Application {
         if (!primaryStage.isIconified()){
             primaryStage.setIconified(true);
         }
+
         if (!globalSettings.openProject(projectPath.getName())){
+            fileChooser.alertNoProject();
             primaryStage.setIconified(false);
             return;
         }
@@ -230,10 +233,9 @@ public class ViewFinder extends Application {
         galleryLayout.preload();
         slideshowLayout.preload();
 
-
         System.out.println("Opening Project: "+globalSettings.projectName);
         primaryStage.setIconified(false);
-        if (currentLayout == startScreenLayout)
+        if (currentLayout == null)
             //switchToSlideshow();
             switchToGallery();
     }

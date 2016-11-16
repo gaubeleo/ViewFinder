@@ -1,15 +1,31 @@
 package ViewFinder;
 
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.effect.Blend;
+import javafx.scene.effect.BlendMode;
+import javafx.scene.effect.ColorInput;
 import javafx.scene.image.Image;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.*;
+import javafx.scene.shape.ClosePath;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 
 import java.util.Vector;
+
+import static java.lang.Double.MAX_VALUE;
+import static java.lang.Math.abs;
 
 public class Gallery extends BorderPane{
     private final ViewFinder vf;
@@ -24,11 +40,12 @@ public class Gallery extends BorderPane{
 
     ////////////////////////////////////
 
+    private Rectangle fadeOut;
+    private StackPane stackPane;
     private ScrollPane scrollPane;
     private ExpandedFlowPane flowLayout;
 
     private Vector<Thumbnail> thumbnails;
-    private Vector<Rectangle> frames;
 
     ////////////////////////////////////
 
@@ -38,20 +55,17 @@ public class Gallery extends BorderPane{
 
     Gallery(ViewFinder vf){
         this.vf = vf;
-        this.index = 0;
+        this.index = -1;
 
         this.globalSettings = GlobalSettings.singleton();
         this.imageHandler = ImageHandler.singleton();
 
         thumbnails = new Vector<Thumbnail>(100);
-        frames = new Vector<Rectangle>(100);
     }
 
     public void create(){
         // Background and Frame Handler
         backgroundHandler =  BackgroundHandler.singleton(globalSettings.backgroundColor);
-
-        scrollPane = new ScrollPane();
 
         flowLayout = new ExpandedFlowPane();
         flowLayout.prefWidthProperty().bind(widthProperty());
@@ -61,11 +75,24 @@ public class Gallery extends BorderPane{
         flowLayout.setHgap(15);
         flowLayout.setVgap(15);
 
+
+        scrollPane = new ScrollPane();
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // Horizontal
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Vertical scroll bar
         scrollPane.setFitToWidth(true);
         scrollPane.setContent(flowLayout);
+        //remove small border of scrollPane
         scrollPane.setStyle("-fx-background-color:transparent;");
+
+        //fadeOut = new Rectangle(0, 0, 1900, 10);
+        //Stop[] stops = {new Stop(0, Color.gray(1., 1.)), new Stop(1, Color.gray(1., 0.))};
+        //LinearGradient grad = new LinearGradient(0, 0, 0, 1, true, CycleMethod.NO_CYCLE, stops);
+        //fadeOut.setFill(grad);
+        //fadeOut.setBlendMode(BlendMode.LIGHTEN);
+
+        stackPane = new StackPane();
+        stackPane.setAlignment(Pos.TOP_CENTER);
+        stackPane.getChildren().addAll(scrollPane); //, fadeOut
 
         settings = SettingsPanel.singleton();
         info = InfoPanel.singleton();
@@ -74,13 +101,14 @@ public class Gallery extends BorderPane{
         addWidthChangeListeners();
 
         setTop(menuPanel);
-        setCenter(scrollPane);
+        setCenter(stackPane);
         setLeft(settings);
         setRight(info);
     }
 
     public void addWidthChangeListeners(){
         widthProperty().addListener((observable, oldValue, newValue) -> {
+            Platform.runLater(() -> menuPanel.setPrefWidth(newValue.doubleValue()));
             fitToWidth();
         });
         scrollPane.widthProperty().addListener((observable, oldValue, newValue) -> {
@@ -97,14 +125,14 @@ public class Gallery extends BorderPane{
     public void fitToWidth(){
         if (getScene() == null)
             return;
-        double fullRunLength = getScene().getWidth() - (settings.getWidth() + info.getWidth());
+        menuPanel.autosize();
+        int fullRunLength = (int)(getScene().getWidth() - (settings.getWidth() + info.getWidth() + 2)); // +2 for scrollPane Border
         Platform.runLater(()->flowLayout.fitToWidth(fullRunLength));
     }
 
     public void newImageSet() {
         flowLayout.clear();
         thumbnails.clear();
-        frames.clear();
         System.gc();
         for (int i=0; i<imageHandler.getFileCount(); i++) {
             Thumbnail thumbnail = new Thumbnail(flowLayout, i);
@@ -113,7 +141,6 @@ public class Gallery extends BorderPane{
     }
 
     public void addThumbnailsThreaded(){
-        newImageSet();
         backgroundThread = new Thread(() -> {
             for (int i=0; i< imageHandler.getFileCount(); i++){
                 Thumbnail thumbnail = thumbnails.get(i);
@@ -124,7 +151,10 @@ public class Gallery extends BorderPane{
 
                 final int _i = i;
                 thumbnail.setOnMouseClicked(e->{
-                    vf.switchToSlideshow(_i);
+                    if (e.getButton() == MouseButton.PRIMARY)
+                        select(_i);
+                        if (e.getClickCount() == 2)
+                            vf.switchToSlideshow(_i);
                 });
 
                 Platform.runLater(()->flowLayout.addNode(thumbnail));
@@ -146,17 +176,17 @@ public class Gallery extends BorderPane{
     }
 
     public void updateSize(){
-        //flowLayout.autosize();
+        flowLayout.autosize();
         //flowLayout.fitToWidth();
         autosize();
     }
 
     public void achieveFocus(int index){
-        this.index = index;
+        select(index);
 
         backgroundHandler.setRoot(flowLayout);
-        backgroundHandler.setCurrentBC(Color.WHITE);
-        backgroundHandler.setNextBC(Color.WHITE);
+        backgroundHandler.setCurrentBC(Color.gray(0.4));
+        backgroundHandler.resetNextBC();
 
         menuPanel.setActive("gallery");
 
@@ -167,20 +197,122 @@ public class Gallery extends BorderPane{
         updateSize();
     }
 
+    private void select(int i) {
+        if (i == index || i < 0)
+            return;
+        assert(index < thumbnails.size());
+
+        if (index >= 0)
+            thumbnails.get(index).deselect();
+        index = i;
+        thumbnails.get(index).select();
+
+        scrollTo(index);
+    }
+
     public void preload(){
         preload(2);
     }
 
     public void preload(int threadCount){
-        resetIndex();
         imageHandler.preloadThumbnailsThreaded(threadCount);
+        newImageSet();
         addThumbnailsThreaded();
     }
 
     public void next(){
+        select(getRealIndex(index+1));
     }
 
     public void previous(){
+        select(getRealIndex(index-1));
+    }
+
+    public void down(){
+        Bounds bounds = thumbnails.get(index).getBoundsInParent();
+        double x = bounds.getMinX()+(bounds.getWidth()/2);
+        double y = thumbnails.get(index).getParent().getBoundsInParent().getMinY();
+
+        int indexBelow = index;
+        double belowX, belowY, minDistance = MAX_VALUE;
+        int i = index;
+
+        do{
+            if (i+1 == imageHandler.getFileCount() || thumbnails.get(i+1).getParent() == null)
+                return;
+            belowY = thumbnails.get(++i).getParent().getBoundsInParent().getMinY();
+        } while(belowY == y);
+
+        do{
+            bounds = thumbnails.get(i).getBoundsInParent();
+            belowX = bounds.getMinX()+(bounds.getWidth()/2);
+
+            if (abs(belowX - x) < minDistance){
+                minDistance = abs(belowX - x);
+                indexBelow = i;
+            }
+            if (i+1 == imageHandler.getFileCount() || thumbnails.get(i+1).getParent() == null)
+                break;
+        } while(thumbnails.get(++i).getParent().getBoundsInParent().getMinY() == belowY && belowX < x);
+
+        select(indexBelow);
+    }
+
+    public void up(){
+        Bounds bounds = thumbnails.get(index).getBoundsInParent();
+        double x = bounds.getMinX()+(bounds.getWidth()/2);
+        double y = thumbnails.get(index).getParent().getBoundsInParent().getMinY();
+
+        int indexAbove = index;
+        double aboveX, aboveY, minDistance = MAX_VALUE;
+        int i = index;
+        do{
+            if (i-1 == -1 || thumbnails.get(i-1).getParent() == null)
+                return;
+            aboveY = thumbnails.get(--i).getParent().getBoundsInParent().getMinY();
+        } while(aboveY == y);
+
+        do{
+            bounds = thumbnails.get(i).getBoundsInParent();
+            aboveX = bounds.getMinX()+(bounds.getWidth()/2);
+
+            if (abs(aboveX - x) < minDistance){
+                minDistance = abs(aboveX - x);
+                indexAbove = i;
+            }
+            if (i-1 == -1 || thumbnails.get(i-1).getParent() == null)
+                break;
+        } while(thumbnails.get(--i).getParent().getBoundsInParent().getMinY() == aboveY && aboveX > x);
+
+        select(indexAbove);
+    }
+
+    public void scrollTo(int i){
+        if (thumbnails.get(i).getParent() == null)
+            return;
+        double offset = 15;
+        Bounds bounds = thumbnails.get(i).getParent().getBoundsInParent();
+
+        double vValue = scrollPane.getVvalue();
+        double fullHeight = flowLayout.getHeight();
+        double scrollHeight = scrollPane.getHeight();
+        double curY = (fullHeight-scrollHeight)*vValue;
+
+        double minY = bounds.getMinY();
+        double maxY = bounds.getMaxY();
+
+        if (minY-offset < curY) {
+            double newVvalue = (minY-offset)/(fullHeight-scrollHeight);
+            scrollPane.setVvalue(newVvalue);
+        }
+        else if (maxY+offset > curY+scrollHeight) {
+            double newVvalue = (maxY + offset - scrollHeight) / (fullHeight - scrollHeight);
+            scrollPane.setVvalue(newVvalue);
+        }
+
+//        System.out.println(bounds);
+//        double value = (y-offset)/(flowLayout.getHeight()-scrollPane.getHeight());
+//        scrollPane.setVvalue(min(value, scrollPane.getVmax()));
     }
 
     public void scrollUp(){
@@ -218,19 +350,7 @@ public class Gallery extends BorderPane{
     }
 
     public void resetIndex(){
-        index = 0;
-    }
-
-    private void increase_index() {
-        change_index(1);
-    }
-
-    private void reduce_index() {
-        change_index(-1);
-    }
-
-    private void change_index(int i) {
-        index = getRealIndex(index + i);
+        select(0);
     }
 
     public int getRealIndex(int i) {

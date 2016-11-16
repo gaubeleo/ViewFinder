@@ -45,12 +45,12 @@ public class MenuPanel extends HBox {
 
         galleryLine = new Line(0, 40, 100, 40);
         galleryLine.setStroke(color);
-        galleryLine.setStrokeWidth(3);
+        galleryLine.setStrokeWidth(4);
         galleryLine.setVisible(false);
 
         slideshowLine = new Line(0, 40, 100, 40);
         slideshowLine.setStroke(color);
-        slideshowLine.setStrokeWidth(3);
+        slideshowLine.setStrokeWidth(4);
         slideshowLine.setVisible(false);
 
         galleryLabel.widthProperty().addListener((observable, oldValue, newValue)->{

@@ -34,7 +34,6 @@ public class BackgroundHandler {
 
     public void setRoot(Region root){
         this.root = root;
-        setCurrentBC(currentBC);
     }
 
     public Rectangle createFrame(int frameWidth){
@@ -44,7 +43,6 @@ public class BackgroundHandler {
         frame.setStrokeWidth(frameWidth);
 
         frame.setStroke(Color.WHITE);
-        //adjustFrameColor();
 
         return frame;
     }
@@ -56,6 +54,8 @@ public class BackgroundHandler {
             }
             @Override
             protected void interpolate(double fraction) {
+                if (nextBC == null || nextBC == currentBC)
+                    return;
                 Color tempColor = currentBC.interpolate(nextBC, fraction);
                 root.setStyle(String.format("-fx-background-color: #%s;", tempColor.toString().substring(2, 8)));
             }
@@ -81,8 +81,12 @@ public class BackgroundHandler {
         this.nextBC = color;
     }
 
+    public void resetNextBC(){
+        this.nextBC = currentBC;
+    }
+
     public void adjustFrameColor(){
-        if (nextBC.getBrightness() > 0.5)
+        if (nextBC.getBrightness() > 0.65)
             frame.setStroke(Color.BLACK);
         else
             frame.setStroke(Color.WHITE);

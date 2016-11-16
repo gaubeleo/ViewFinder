@@ -308,7 +308,7 @@ public class ImageHandler {
 
     public Color getBackgroundColor(File file){
         ImageSettings imageSettings = settings.get(file);
-        if (settings.get(file).backgroundColor != null)
+        if (imageSettings.backgroundColor != null)
             return imageSettings.backgroundColor;
         return globalSettings.backgroundColor;
     }

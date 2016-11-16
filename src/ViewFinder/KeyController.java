@@ -55,10 +55,18 @@ public class KeyController {
                 vf.switchToSlideshow(gallery.getIndex());
                 break;
             case UP:
-                gallery.scrollUp();
+                gallery.up();
+                //gallery.scrollUp();
                 break;
             case DOWN:
-                gallery.scrollDown();
+                gallery.down();
+                //gallery.scrollDown();
+                break;
+            case RIGHT:
+                gallery.next();
+                break;
+            case LEFT:
+                gallery.previous();
                 break;
             case I:
                 gallery.slidePanels();

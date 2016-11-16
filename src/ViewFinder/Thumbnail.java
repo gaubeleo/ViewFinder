@@ -2,16 +2,27 @@ package ViewFinder;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
+import javafx.geometry.Bounds;
+import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
-public class Thumbnail extends ImageView {
+public class Thumbnail extends StackPane {
     private final GlobalSettings globalSettings;
     private final ExpandedFlowPane parent;
+    private ImageView iv;
+    private Rectangle frame;
+
 
     private FadeTransition fadeIn;
     private ScaleTransition scaleIn;
+
+    private boolean selected;
+    private final int frameSize;
     private double ratio;
     private int index;
 
@@ -20,16 +31,22 @@ public class Thumbnail extends ImageView {
         this.parent = flowLayout;
 
         globalSettings = GlobalSettings.singleton();
-
+        frameSize = 4;
+        selected = false;
         ratio = 0.;
 
-        setPreserveRatio(true);
-        setSmooth(true);
+        iv = new ImageView();
+
+        //iv.setPreserveRatio(true);
+        //iv.setSmooth(true);
+        iv.setCache(true);
+        iv.setCacheHint(CacheHint.SCALE);
+
+        getChildren().add(iv);
+
+        setAlignment(Pos.CENTER);
 
         createAnimations();
-
-        setCache(true);
-        setCacheHint(CacheHint.SCALE);
     }
 
     public void createAnimations(){
@@ -47,9 +64,53 @@ public class Thumbnail extends ImageView {
             //parent.fitToWidth();
         });
     }
+
     public void setImg(Image img){
-        setImage(img);
+        iv.setImage(img);
         ratio = img.getWidth()/img.getHeight();
+        createFrame();
+    }
+
+    public void createFrame(){
+        this.frame = new Rectangle();
+
+        frame.setFill(Color.TRANSPARENT);
+        frame.setStrokeWidth(frameSize);
+
+        frame.setStroke(Color.valueOf("#0099e5"));
+
+        resizeFrame();
+
+        frame.toBack();
+        deselect();
+
+        getChildren().add(frame);
+    }
+
+    public boolean select(){
+        if (frame == null)
+            return false;
+        selected = true;
+        frame.setStroke(Color.valueOf("#0099e5"));
+        //frame.setVisible(true);
+        return true;
+    }
+
+    public boolean deselect(){
+        if (frame == null)
+            return false;
+        selected = false;
+        frame.setStroke(Color.WHITE);
+        //frame.setVisible(false);
+        return true;
+    }
+
+    public void resizeFrame(){
+        Bounds imgBounds = iv.getBoundsInParent();
+        double width = imgBounds.getWidth()+frameSize;
+        double height = imgBounds.getHeight()+frameSize;
+        frame.setWidth(width);
+        frame.setHeight(height);
     }
 
     public void show() {
@@ -59,5 +120,15 @@ public class Thumbnail extends ImageView {
 
     public double getRatio(){
         return ratio;
+    }
+
+    public void setFitSize(int newHeight, int newWidth) {
+        iv.setFitHeight(newHeight);
+        iv.setFitWidth(newWidth);
+        resizeFrame();
+    }
+
+    public int getFrameSize() {
+        return frameSize;
     }
 }
