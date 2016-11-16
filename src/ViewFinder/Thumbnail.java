@@ -5,30 +5,29 @@ import javafx.animation.ScaleTransition;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.CacheHint;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 
 public class Thumbnail extends StackPane {
-    private final GlobalSettings globalSettings;
-    private final ExpandedFlowPane parent;
+    protected final GlobalSettings globalSettings;
     private ImageView iv;
-    private Rectangle frame;
-
+    protected Rectangle frame;
 
     private FadeTransition fadeIn;
     private ScaleTransition scaleIn;
 
-    private boolean selected;
-    private final int frameSize;
-    private double ratio;
-    private int index;
+    protected boolean selected;
+    protected final int frameSize;
+    protected double ratio;
+    protected int index;
 
-    public Thumbnail(ExpandedFlowPane flowLayout, int index){
+    public Thumbnail(int index){
         this.index = index;
-        this.parent = flowLayout;
 
         globalSettings = GlobalSettings.singleton();
         frameSize = 4;
@@ -130,5 +129,47 @@ public class Thumbnail extends StackPane {
 
     public int getFrameSize() {
         return frameSize;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+}
+
+class LoadIndicator extends Thumbnail{
+    ProgressIndicator pi;
+
+    private int curHeight;
+    private int curWidth;
+
+    public LoadIndicator(int index) {
+        super(index);
+
+        pi = new ProgressIndicator();
+        pi.setMaxHeight(100);
+        getChildren().add(pi);
+
+        getChildren().add(new Text(Integer.toString(index)));
+
+        ratio = 1.5;
+        curHeight = 150;
+        curWidth = 300;
+        createFrame();
+    }
+
+    @Override
+    public void setFitSize(int newHeight, int newWidth) {
+        //pi.setMaxHeight(newHeight);
+        curHeight = newHeight;
+        curWidth = newWidth;
+        resizeFrame();
+    }
+
+    @Override
+    public void resizeFrame(){
+        double width = curWidth+frameSize;
+        double height = curHeight+frameSize;
+        frame.setWidth(width);
+        frame.setHeight(height);
     }
 }

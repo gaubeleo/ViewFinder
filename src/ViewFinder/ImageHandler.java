@@ -179,6 +179,12 @@ public class ImageHandler {
     }
 
     public boolean preloadThumbnail(File file){
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         if (thumbnails.get(file) != null)
             return true;
         try {

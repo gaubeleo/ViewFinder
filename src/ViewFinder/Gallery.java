@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.Blend;
 import javafx.scene.effect.BlendMode;
@@ -136,29 +137,49 @@ public class Gallery extends BorderPane{
         thumbnails.clear();
         System.gc();
         for (int i=0; i<imageHandler.getFileCount(); i++) {
-            Thumbnail thumbnail = new Thumbnail(flowLayout, i);
-            thumbnails.add(thumbnail);
+            LoadIndicator li = new LoadIndicator(i);
+
+            final int _i = i;
+            li.setOnMouseClicked(e->{
+                if (e.getButton() == MouseButton.PRIMARY)
+                    select(_i);
+                if (e.getClickCount() == 2)
+                    vf.switchToSlideshow(_i);
+            });
+
+            thumbnails.add(li);
+
+            flowLayout.addNode(li);
         }
     }
 
     public void addThumbnailsThreaded(){
         backgroundThread = new Thread(() -> {
             for (int i=0; i< imageHandler.getFileCount(); i++){
-                Thumbnail thumbnail = thumbnails.get(i);
+                Thumbnail thumbnail = new Thumbnail(i);
+
                 Image img = imageHandler.getThumbnail(i);
                 if (img == null)
                     break;
                 thumbnail.setImg(img);
 
+                if (index == i)
+                    thumbnail.select();
+
                 final int _i = i;
                 thumbnail.setOnMouseClicked(e->{
                     if (e.getButton() == MouseButton.PRIMARY)
                         select(_i);
-                        if (e.getClickCount() == 2)
-                            vf.switchToSlideshow(_i);
+                    if (e.getClickCount() == 2)
+                        vf.switchToSlideshow(_i);
                 });
+                Thumbnail li = thumbnails.remove(i);
+                thumbnails.add(i, thumbnail);
 
-                Platform.runLater(()->flowLayout.addNode(thumbnail));
+                Platform.runLater(()-> {
+                    flowLayout.replaceNode(li, thumbnail);
+                    //flowLayout.addNode(thumbnail);
+                });
                 thumbnail.show();
             }
         });
@@ -201,8 +222,9 @@ public class Gallery extends BorderPane{
             return;
         assert(i < thumbnails.size());
 
-        if (index >= 0)
+        if (index >= 0){
             thumbnails.get(index).deselect();
+        }
         index = i;
         thumbnails.get(index).select();
 
@@ -287,10 +309,14 @@ public class Gallery extends BorderPane{
     }
 
     public void scrollTo(int i){
-        if (thumbnails.get(i).getParent() == null)
+        Thumbnail thumbnail = thumbnails.get(i);
+        if (thumbnail.getParent() == null) {
+            scrollPane.setVvalue(0);
             return;
+        }
+
         double offset = 15;
-        Bounds bounds = thumbnails.get(i).getParent().getBoundsInParent();
+        Bounds bounds = thumbnail.getParent().getBoundsInParent();
 
         double vValue = scrollPane.getVvalue();
         double fullHeight = flowLayout.getHeight();
@@ -308,10 +334,6 @@ public class Gallery extends BorderPane{
             double newVvalue = (maxY + offset - scrollHeight) / (fullHeight - scrollHeight);
             scrollPane.setVvalue(newVvalue);
         }
-
-//        System.out.println(bounds);
-//        double value = (y-offset)/(flowLayout.getHeight()-scrollPane.getHeight());
-//        scrollPane.setVvalue(min(value, scrollPane.getVmax()));
     }
 
     public void scrollUp(){

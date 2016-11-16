@@ -1,11 +1,11 @@
 package ViewFinder;
 
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import static java.lang.Math.abs;
-import static java.lang.Math.max;
 
 class Run extends HBox {
     private int size;
@@ -107,6 +107,47 @@ class Run extends HBox {
         nextRun.pushToFirst(thumbnail);
     }
 
+    public synchronized void pop(Thumbnail thumbnail) {
+        assert(getChildren().contains(thumbnail));
+
+        getChildren().remove(thumbnail);
+        size--;
+        minRunLength -= (int)(thumbnail.getRatio()*minHeight);
+        curRunLength -= (int)(thumbnail.getRatio()*curHeight);
+        totalSpacing -= getSpacing() + frameOffset;
+        if (nextRun != null) {
+            while (nextRun.getSize() > 0 && minRunLength + totalSpacing + getSpacing() + frameOffset + nextRun.getFirstMinWidth() <= maxRunLength) {
+                pullNext();
+            }
+        }
+    }
+
+    public synchronized void replace(Thumbnail loadIndicator, Thumbnail thumbnail) {
+        ObservableList<Node> children = getChildren();
+        assert(children.contains(loadIndicator));
+
+        int i = children.indexOf(loadIndicator);
+        children.remove(i);
+
+        size--;
+        minRunLength -= (int)(loadIndicator.getRatio()*minHeight);
+        curRunLength -= (int)(loadIndicator.getRatio()*curHeight);
+        totalSpacing -= getSpacing() + frameOffset;
+
+        boolean success;
+        if (i > size)
+            success = addNodeRecursively(thumbnail);
+        else
+            success = addNode(i, thumbnail);
+        while (!success){
+            popLast();
+            if (i > size)
+                success = addNodeRecursively(thumbnail);
+            else
+                success = addNode(i, thumbnail);
+        }
+    }
+
     public synchronized void fitToWidth(){
         double curRatio = (double)(maxRunLength-totalSpacing) / (double) minRunLength;
         if ((nextRun == null || nextRun.getSize() == 0) && curRatio > 2.)
@@ -127,21 +168,29 @@ class Run extends HBox {
 
     public synchronized void changeMaxRunLength(int maxRunLength) {
         this.maxRunLength = maxRunLength;
-        if (abs(oldRunLength-maxRunLength) > 300)
-            oldRunLength = maxRunLength;
-            relayout();
+        //if (abs(oldRunLength-maxRunLength) > 300)
+         //   oldRunLength = maxRunLength;
+           // relayout();
         fitToWidth();
     }
-    
+
     public synchronized void relayout(){
+
+        isInOrder();
+
         if (nextRun != null){
-            while (nextRun.getSize() > 0 && minRunLength + totalSpacing + getSpacing() + frameOffset + nextRun.getFirstMinWidth() <= maxRunLength){
-                pullNext();
-            }
             while (minRunLength + totalSpacing > maxRunLength){
                 popLast();
             }
+
+            isInOrder();
+
+            while (nextRun.getSize() > 0 && minRunLength + totalSpacing + getSpacing() + frameOffset + nextRun.getFirstMinWidth() <= maxRunLength){
+                pullNext();
+            }
         }
+
+        isInOrder();
     }
 
     public void setNextRun(Run nextRun) {
@@ -168,6 +217,15 @@ class Run extends HBox {
         assert(getChildren().size() == size);
         return (int)(((Thumbnail)getChildren().get(0)).getRatio()*minHeight);
     }
+
+    public void isInOrder(){
+        int previousIndex = -1;
+        for (Node node:getChildren()){
+            Thumbnail thumbnail = (Thumbnail) node;
+            assert(thumbnail.getIndex() > previousIndex);
+            previousIndex = thumbnail.getIndex();
+        }
+    }
 }
 
 public class ExpandedFlowPane extends VBox {
@@ -183,20 +241,8 @@ public class ExpandedFlowPane extends VBox {
 
         Vgap = 0;
         minHeight = 300;
-//        maxRunLength = getWidth()-(getInsets().getLeft()+getInsets().getRight());
         maxRunLength = 1900;
-
-//        globalSettings = GlobalSettings.singleton();
-//        widthProperty().addListener((observable, oldValue, newValue) -> {
-//            Platform.runLater(()->fitToWidth(newValue.intValue()-(getInsets().getLeft()+getInsets().getRight())));
-//        });
     }
-
-//    @Override
-//    protected void layoutChildren() {
-//        super.layoutChildren();
-//        Platform.runLater(()->fitToWidth());
-//    }
 
     public void addNode(Thumbnail thumbnail){
         assert(thumbnail.getRatio() > 0.);
@@ -204,6 +250,28 @@ public class ExpandedFlowPane extends VBox {
             addRun();
         boolean success = lastRun.addNodeRecursively(thumbnail);
         assert(success);
+    }
+
+    public synchronized void replaceNode(Thumbnail loadIndicator, Thumbnail thumbnail) {
+        final int len = getChildren().size();
+        for(int i=0; i<len; i++){
+            if (i >= getChildren().size())
+                break;
+            Run run = (Run) getChildren().get(i);
+            ObservableList<Node> nodes = run.getChildren();
+            if (nodes.contains(loadIndicator))
+                run.replace(loadIndicator, thumbnail);
+        }
+    }
+
+    public void removeNode(Thumbnail thumbnail) {
+        final int len = getChildren().size();
+        for(int i=0; i<len; i++){
+            Run run = (Run)getChildren().get(i);
+            ObservableList<Node> nodes = run.getChildren();
+            if (nodes.contains(thumbnail))
+                run.pop(thumbnail);
+        }
     }
 
     public Run addRun() {

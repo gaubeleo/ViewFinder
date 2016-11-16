@@ -3,7 +3,9 @@ package ViewFinder;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.Transition;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
@@ -50,10 +52,10 @@ public class Slideshow extends BorderPane {
 
     Slideshow(ViewFinder vf){
         this.vf = vf;
-        this.index = 0;
-        this.preloadCount = 2;
-
         this.globalSettings = GlobalSettings.singleton();
+        this.index = 0;
+
+        this.preloadCount = globalSettings.preloadCount;
         this.imageHandler = ImageHandler.singleton();
     }
 
@@ -155,9 +157,11 @@ public class Slideshow extends BorderPane {
 
         for (int offset = -preloadCount; offset <= preloadCount; offset++){
             if (offset == 0){
-                // should be threaded and on threadFinish --> fadeIn || use scaled thumbnai
-                imageHandler.preload(getRealIndex(index));
+                // should be threaded and on threadFinish --> fadeIn || use scaled thumbnail
+                imageHandler.preload(index);
                 image.setImage(imageHandler.get(index));
+                setCenter(imageContainer);
+                imageFadeIn.play();
             }
             else
                 imageHandler.preloadThreaded(getRealIndex(index+offset));
