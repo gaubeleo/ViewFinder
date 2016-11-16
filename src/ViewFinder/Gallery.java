@@ -131,6 +131,7 @@ public class Gallery extends BorderPane{
     }
 
     public void newImageSet() {
+        this.index = -1;
         flowLayout.clear();
         thumbnails.clear();
         System.gc();
@@ -181,9 +182,7 @@ public class Gallery extends BorderPane{
         autosize();
     }
 
-    public void achieveFocus(int index){
-        select(index);
-
+    public void achieveFocus(){
         backgroundHandler.setRoot(flowLayout);
         backgroundHandler.setCurrentBC(Color.gray(0.4));
         backgroundHandler.resetNextBC();
@@ -197,10 +196,10 @@ public class Gallery extends BorderPane{
         updateSize();
     }
 
-    private void select(int i) {
-        if (i == index || i < 0)
+    public void select(int i) {
+        if (i < 0 || i == index)
             return;
-        assert(index < thumbnails.size());
+        assert(i < thumbnails.size());
 
         if (index >= 0)
             thumbnails.get(index).deselect();
@@ -211,7 +210,7 @@ public class Gallery extends BorderPane{
     }
 
     public void preload(){
-        preload(2);
+        preload(1);
     }
 
     public void preload(int threadCount){

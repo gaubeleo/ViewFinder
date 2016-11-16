@@ -131,9 +131,10 @@ public class ViewFinder extends Application {
     }
 
     public void switchToSlideshow(int index){
+        slideshowLayout.select(index);
         if (currentLayout == slideshowLayout)
             return;
-        slideshowLayout.achieveFocus(index);
+        slideshowLayout.achieveFocus();
 
         currentLayout = slideshowLayout;
         switchToLayout();
@@ -146,9 +147,10 @@ public class ViewFinder extends Application {
     }
 
     public void switchToGallery(int index) {
+        galleryLayout.select(index);
         if (currentLayout == galleryLayout)
             return;
-        galleryLayout.achieveFocus(index);
+        galleryLayout.achieveFocus();
 
         currentLayout = galleryLayout;
         switchToLayout();
@@ -234,10 +236,12 @@ public class ViewFinder extends Application {
         slideshowLayout.preload();
 
         System.out.println("Opening Project: "+globalSettings.projectName);
+
         primaryStage.setIconified(false);
-        if (currentLayout == null)
-            //switchToSlideshow();
-            switchToGallery();
+
+        //if (currentLayout == null || currentLayout == startScreenLayout)
+        //switchToSlideshow();
+        switchToGallery();
     }
 
 

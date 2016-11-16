@@ -28,7 +28,7 @@ public class GlobalSettings extends ImageSettings{
         mostRecentProject = new File(".");
         imagePath = new File("");
         onStartAction = "Default";
-        preloadCount = 2;
+        preloadCount = 1;
 
         //set ImageSettings
         backgroundColor = Color.gray(0.55);

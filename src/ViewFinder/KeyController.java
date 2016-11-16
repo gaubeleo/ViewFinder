@@ -68,6 +68,9 @@ public class KeyController {
             case LEFT:
                 gallery.previous();
                 break;
+            case ENTER:
+                vf.switchToSlideshow(gallery.getIndex());
+                break;
             case I:
                 gallery.slidePanels();
                 break;

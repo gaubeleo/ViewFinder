@@ -119,10 +119,7 @@ public class Slideshow extends BorderPane {
         backgroundFade = backgroundHandler.fadeBackground(duration.multiply(2));
     }
 
-    public void achieveFocus(int index){
-        if (index != this.index)
-            skipTo(index);
-
+    public void achieveFocus(){
         backgroundHandler.setRoot(this);
         backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index)));
         backgroundHandler.resetNextBC();
@@ -138,7 +135,7 @@ public class Slideshow extends BorderPane {
         autosize();
     }
 
-    private void skipTo(int index) {
+    public void select(int index) {
         preload(index);
     }
 
@@ -177,19 +174,21 @@ public class Slideshow extends BorderPane {
         frameFade.play();
         backgroundFade.play();
 
-        increase_index();
+        increaseIndex();
 
         dropPreload(getRealIndex((index-1)-preloadCount), getRealIndex(index+preloadCount));
     }
 
     public void previous(){
+        if (imageFade.statusProperty().get() != Animation.Status.STOPPED)
+            return;
         backgroundHandler.setNextBC(imageHandler.getBackgroundColor(getRealIndex(index-1)));
 
         imageFade.play();
         frameFade.play();
         backgroundFade.play();
 
-        reduce_index();
+        reduceIndex();
 
         dropPreload(getRealIndex((index+1)+preloadCount), getRealIndex(index-preloadCount));
     }
@@ -237,15 +236,15 @@ public class Slideshow extends BorderPane {
         imageContainer.toggleFrame();
     }
 
-    private void increase_index() {
-        change_index(1);
+    public void increaseIndex() {
+        changeIndex(1);
     }
 
-    private void reduce_index() {
-        change_index(-1);
+    public void reduceIndex() {
+        changeIndex(-1);
     }
 
-    private void change_index(int i) {
+    public void changeIndex(int i) {
         index = getRealIndex(index + i);
     }
 
