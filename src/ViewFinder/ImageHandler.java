@@ -72,7 +72,7 @@ public class ImageHandler {
             imageSettings.load();
             settings.put(file, imageSettings);
             //Test-purpose only
-            if(random.nextDouble() < 0.1){
+            if(random.nextDouble() < 0.){ //0.1
                 imageSettings.backgroundColor = Color.gray(random.nextDouble());
                 imageSettings.save();
             }

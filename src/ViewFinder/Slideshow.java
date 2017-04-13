@@ -80,7 +80,7 @@ public class Slideshow extends BorderPane {
         info = InfoPanel.singleton();
         menuPanel = MenuPanel.singleton();
 
-        setTop(menuPanel);
+        //setTop(menuPanel);
         setCenter(imageContainer);
         setLeft(settings);
         setRight(info);
@@ -129,7 +129,7 @@ public class Slideshow extends BorderPane {
         menuPanel.setMaxWidth(MAX_VALUE);
         menuPanel.setActive("slideshow");
 
-        setTop(menuPanel);
+        //setTop(menuPanel);
         setLeft(settings);
         setRight(info);
 

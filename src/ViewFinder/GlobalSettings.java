@@ -31,9 +31,9 @@ public class GlobalSettings extends ImageSettings{
         preloadCount = 1;
 
         //set ImageSettings
-        backgroundColor = Color.gray(0.55);
+        backgroundColor = Color.gray(0.25);
         frameColor = Color.valueOf("#0099e5");
-        frameSize = 3;
+        frameSize = 4;
         hasFrame = true;
 
         panelColor = Color.gray(0.25);

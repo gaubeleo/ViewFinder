@@ -246,11 +246,15 @@ public class ViewFinder extends Application {
 
 
     public void toggleFullscreen(){
-        if (!globalSettings.fullscreen)
+        if (!globalSettings.fullscreen) {
+            //MenuPanel.singleton().setVisible(false);
             primaryStage.setFullScreen(true);
-        else
+        }
+        else {
             primaryStage.setFullScreen(false);
+            //MenuPanel.singleton().setVisible(true);
             primaryStage.setMaximized(true);
+        }
         globalSettings.fullscreen = !globalSettings.fullscreen;
     }
 
