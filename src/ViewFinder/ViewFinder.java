@@ -11,7 +11,6 @@ import javafx.stage.Stage;
 
 import java.io.File;
 
-
 public class ViewFinder extends Application {
     private Stage primaryStage;
     private Parent currentLayout;

@@ -1,11 +1,8 @@
 package ViewFinder;
 
-import javafx.animation.Animation;
-import javafx.animation.FadeTransition;
-import javafx.animation.Transition;
-import javafx.application.Platform;
+import javafx.animation.*;
 import javafx.geometry.Insets;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.shape.Rectangle;
@@ -35,6 +32,8 @@ public class Slideshow extends BorderPane {
     private Rectangle frame;
 
     ////////////////////////////////////
+
+    private TranslateTransition zoomTranslation;
 
     private FadeTransition imageFadeIn;
     private FadeTransition imageFade;
@@ -93,6 +92,15 @@ public class Slideshow extends BorderPane {
 
     public void createAnimations(){
         Duration duration = globalSettings.fadeDuration;
+
+        zoomTranslation =  new TranslateTransition(new Duration(4500), imageContainer);
+        zoomTranslation.setOnFinished(event -> {
+            imageContainer.translateXProperty().set(0);
+            imageContainer.translateYProperty().set(0);
+
+            imageContainer.setScaleX(1.);
+            imageContainer.setScaleY(1.);
+        });
 
         imageFadeIn = new FadeTransition(duration, image);
         imageFadeIn.setFromValue(0.0);
@@ -236,6 +244,31 @@ public class Slideshow extends BorderPane {
         info.slideInOut();
     }
 
+    public void zoom(){
+        if (zoomTranslation.statusProperty().get() != Animation.Status.STOPPED)
+            return;
+
+        if (isLandscape(image.getImage())){
+            zoomTranslation.setFromX(400);
+            zoomTranslation.setToX(-400);
+            zoomTranslation.setFromY(0);
+            zoomTranslation.setToY(0);
+        }
+        else{
+            zoomTranslation.setFromX(0);
+            zoomTranslation.setToX(0);
+            zoomTranslation.setFromY(-400);
+            zoomTranslation.setToY(400);
+        }
+
+        double scale = 2.75;
+
+        imageContainer.setScaleX(scale);
+        imageContainer.setScaleY(scale);
+
+        zoomTranslation.play();
+    }
+
     public void frameImage(){
         imageContainer.toggleFrame();
     }
@@ -264,5 +297,17 @@ public class Slideshow extends BorderPane {
 
     public int getIndex() {
         return index;
+    }
+
+    public static boolean isPortrait(Image img){
+        return img.getHeight() > img.getWidth();
+    }
+
+    public static boolean isLandscape(Image img){
+        return img.getHeight() < img.getWidth();
+    }
+
+    public static boolean isSquare(Image img){
+        return img.getHeight() == img.getWidth();
     }
 }

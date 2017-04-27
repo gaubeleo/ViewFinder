@@ -107,7 +107,6 @@ public class ImageHandler {
         return true;
     }
 
-    // includes isEmpty
     public boolean chooseDirectory(File path){
         // will not change any files if not successful
 

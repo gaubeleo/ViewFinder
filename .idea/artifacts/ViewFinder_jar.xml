@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="ViewFinder:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/ViewFinder_jar</output-path>
+    <root id="archive" name="ViewFinder.jar">
+      <element id="module-output" name="ViewFinder" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/commons-imaging-1.0-20130811.122228-3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/commons-io-2.5.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

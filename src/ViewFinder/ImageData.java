@@ -4,7 +4,7 @@ import java.io.File;
 import java.util.Date;
 import java.util.Vector;
 
-public class ImageData {
+class ImageData {
     public String filename;
     public String directory;
     public String path;

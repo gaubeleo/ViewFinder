@@ -97,6 +97,10 @@ public class KeyController {
                 slideshow.darkenBackground();
                 break;
 
+            case SPACE:
+                slideshow.zoom();
+                break;
+
             case I:
                 slideshow.slidePanels();
                 break;

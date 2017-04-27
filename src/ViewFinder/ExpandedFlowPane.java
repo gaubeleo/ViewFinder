@@ -240,7 +240,7 @@ public class ExpandedFlowPane extends VBox {
         super();
 
         Vgap = 0;
-        minHeight = 300;
+        minHeight = 250;
         maxRunLength = 1900;
     }
 
