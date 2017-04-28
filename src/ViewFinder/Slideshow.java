@@ -12,6 +12,8 @@ import javafx.util.Duration;
 import java.util.Vector;
 
 import static java.lang.Double.MAX_VALUE;
+import static java.lang.Math.min;
+import static java.lang.Math.max;
 
 public class Slideshow extends BorderPane {
     private final ViewFinder vf;
@@ -131,12 +133,12 @@ public class Slideshow extends BorderPane {
         endZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(endZoomPos.translateY).subtract(endZoom.heightProperty().divide(2)));
         endZoom.setVisible(false);
 
-        imageContainer.setOnMouseMoved(event -> {
+        setOnMouseMoved(event -> {
             selectZoomPos.translateX.set(getWidth()/2 - event.getX());
             selectZoomPos.translateY.set(getHeight()/2 - event.getY());
         });
 
-        imageContainer.setOnMouseDragged(event -> {
+        setOnMouseDragged(event -> {
             selectZoomPos.translateX.set(getWidth()/2 - event.getX());
             selectZoomPos.translateY.set(getHeight()/2 - event.getY());
 
@@ -154,7 +156,7 @@ public class Slideshow extends BorderPane {
         });
 
         // Same as MouseDragged
-        imageContainer.setOnMousePressed(event -> {
+        setOnMousePressed(event -> {
             selectZoomPos.translateX.set(getWidth()/2 - event.getX());
             selectZoomPos.translateY.set(getHeight()/2 - event.getY());
 
@@ -171,16 +173,16 @@ public class Slideshow extends BorderPane {
             }
         });
 
-        imageContainer.setOnScroll(event -> {
+        setOnScroll(event -> {
             if (!showZoom)
                 return;
 
             // Test on different Mouse
             if (event.getDeltaY() > 0){
-                selectZoomPos.scale.add(0.5);
+                selectZoomPos.scale.set(min(selectZoomPos.scale.doubleValue()*1.05, 15.));
             }
             else if (event.getDeltaY() < 0){
-                selectZoomPos.scale.subtract(0.5);
+                selectZoomPos.scale.set(max(selectZoomPos.scale.doubleValue()*0.95, 1.));
             }
             else{
                 System.out.println("WARNING: Unexpected MouseScroll DeltaY-value: 0");
@@ -188,7 +190,7 @@ public class Slideshow extends BorderPane {
 
         });
 
-        imageContainer.setOnMouseReleased(event -> {
+        setOnMouseReleased(event -> {
             if (!showZoom)
                 return;
 
@@ -196,21 +198,24 @@ public class Slideshow extends BorderPane {
                 startZoomPos.set(selectZoomPos);
                 startZoom.setVisible(true);
                 selectZoom.setStroke(Color.ORANGE);
+                // uncomment to enable selectZoom rescale to endZoom
+                //selectZoomPos.set(endZoomPos);
             }
             else{
                 endZoomPos.set(selectZoomPos);
                 endZoom.setVisible(true);
                 selectZoom.setStroke(Color.GREENYELLOW);
+                selectZoomPos.set(startZoomPos);
             }
         });
 
 
-        imageContainer.setOnMouseExited(event -> {
+        setOnMouseExited(event -> {
             if (showZoom)
                 selectZoom.setVisible(false);
         });
 
-        imageContainer.setOnMouseEntered(event -> {
+        setOnMouseEntered(event -> {
             if (showZoom)
                 selectZoom.setVisible(true);
         });
@@ -233,8 +238,9 @@ public class Slideshow extends BorderPane {
         Duration duration = globalSettings.fadeDuration;
 
         zoomTranslation =  new TranslateTransition(new Duration(4500), imageContainer);
-        zoomTranslation.setInterpolator(Interpolator.SPLINE(0.6, 0., 0.4, 1.));
+        zoomTranslation.setInterpolator(Interpolator.SPLINE(0.5, 0., 0.5, 1.));
         zoomScale =  new ScaleTransition(new Duration(4500), imageContainer);
+        zoomScale.setInterpolator(Interpolator.SPLINE(0.5, 0., 0.5, 1.));
 
         zoomTransition = new ParallelTransition();
         zoomTransition.getChildren().addAll(zoomTranslation, zoomScale);
@@ -261,6 +267,7 @@ public class Slideshow extends BorderPane {
             endZoomPos.set(imageHandler.getEndZoom(index));
 
             selectZoom.setStroke(Color.GREENYELLOW);
+            selectZoomPos.set(startZoomPos);
         });
 
         fadeInFrame = new FadeTransition(duration, frame);
@@ -283,18 +290,20 @@ public class Slideshow extends BorderPane {
         backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index)));
         backgroundHandler.resetNextBC();
 
+        showZoom = false;
+
         startZoomPos.set(imageHandler.getStartZoom(index));
         endZoomPos.set(imageHandler.getEndZoom(index));
 
-        menuPanel.setMaxWidth(MAX_VALUE);
-        menuPanel.setActive("slideshow");
-
-        showZoom = false;
-        nextEndZoom = false;
+        selectZoom.setStroke(Color.GREENYELLOW);
+        selectZoomPos.set(startZoomPos);
 
         selectZoom.setVisible(false);
         startZoom.setVisible(false);
         endZoom.setVisible(false);
+
+        menuPanel.setMaxWidth(MAX_VALUE);
+        menuPanel.setActive("slideshow");
 
         //setTop(menuPanel);
         setLeft(settings);
