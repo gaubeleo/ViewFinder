@@ -122,7 +122,7 @@ public class ViewFinder extends Application {
         currentLayout = startScreenLayout;
         switchToLayout();
 
-        currentScene.setOnKeyPressed(event -> keyController.handleStartScreen(event));
+        currentScene.setOnKeyPressed(event -> keyController.handleStartScreenPressed(event));
     }
 
     public void switchToSlideshow(){
@@ -138,7 +138,8 @@ public class ViewFinder extends Application {
         currentLayout = slideshowLayout;
         switchToLayout();
 
-        currentScene.setOnKeyPressed(event -> keyController.handleSlideshow(event));
+        currentScene.setOnKeyPressed(event -> keyController.handleSlideshowPressed(event));
+        currentScene.setOnKeyReleased(event -> keyController.handleSlideshowReleased(event));
     }
 
     public void switchToGallery(){
@@ -154,7 +155,7 @@ public class ViewFinder extends Application {
         currentLayout = galleryLayout;
         switchToLayout();
 
-        currentScene.setOnKeyPressed(event -> keyController.handleGallery(event));
+        currentScene.setOnKeyPressed(event -> keyController.handleGalleryPressed(event));
     }
 
     // create a smoother transition between scenes...

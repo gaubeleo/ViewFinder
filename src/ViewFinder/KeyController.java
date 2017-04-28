@@ -20,7 +20,7 @@ public class KeyController {
         return instance;
     }
 
-    private void handleGlobal(KeyEvent e){
+    private void handleGlobalPressed(KeyEvent e){
         switch (e.getCode()) {
             case F5:
                 vf.toggleFullscreen();
@@ -38,17 +38,17 @@ public class KeyController {
         }
     }
 
-    public void handleStartScreen(KeyEvent e){
+    public void handleStartScreenPressed(KeyEvent e){
         switch (e.getCode()) {
             case I:
                 startScreen.slidePanels();
                 break;
         }
 
-        handleGlobal(e);
+        handleGlobalPressed(e);
     }
 
-    public void handleGallery(KeyEvent e){
+    public void handleGalleryPressed(KeyEvent e){
         switch (e.getCode()) {
             case ESCAPE:
                 vf.switchToSlideshow(gallery.getIndex());
@@ -75,10 +75,10 @@ public class KeyController {
                 break;
         }
 
-        handleGlobal(e);
+        handleGlobalPressed(e);
     }
 
-    public void handleSlideshow(KeyEvent e){
+    public void handleSlideshowPressed(KeyEvent e){
         switch (e.getCode()) {
             case ESCAPE:
                 vf.switchToGallery(slideshow.getIndex());
@@ -100,6 +100,16 @@ public class KeyController {
                 slideshow.zoom();
                 break;
 
+            case SHIFT:
+                slideshow.lockZoomOnLine();
+                break;
+            case CONTROL:
+                slideshow.lockZoomFixedPos();
+                break;
+            case ALT:
+                slideshow.lockZoomOnCenter();
+                break;
+
             case Z:
                 slideshow.setZoom();
                 break;
@@ -112,7 +122,20 @@ public class KeyController {
                 break;
         }
 
-        handleGlobal(e);
+        handleGlobalPressed(e);
+    }
+    public void handleSlideshowReleased(KeyEvent e) {
+        switch (e.getCode()) {
+            case SHIFT:
+                slideshow.releaseZoomOnLine();
+                break;
+            case CONTROL:
+                slideshow.releaseZoomFixedPos();
+                break;
+            case ALT:
+                slideshow.releaseZoomOnCenter();
+                break;
+        }
     }
 
     public void setStartScreen(StartScreen startScreen) {
@@ -126,5 +149,4 @@ public class KeyController {
     public void setGallery(Gallery gallery) {
         this.gallery = gallery;
     }
-
 }

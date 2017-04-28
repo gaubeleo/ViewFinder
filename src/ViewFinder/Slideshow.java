@@ -1,17 +1,22 @@
 package ViewFinder;
 
 import javafx.animation.*;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
 import java.util.Vector;
 
 import static java.lang.Double.MAX_VALUE;
+import static java.lang.Math.abs;
 import static java.lang.Math.min;
 import static java.lang.Math.max;
 
@@ -38,6 +43,11 @@ public class Slideshow extends BorderPane {
     private Rectangle startZoom;
     private Rectangle endZoom;
 
+    private Line zoomHorizontalHelper;
+    private Line zoomVerticalHelper;
+    private Circle zoomFixedPosHelper;
+
+    private ZoomPos center;
     private ZoomPos selectZoomPos;
     private ZoomPos startZoomPos;
     private ZoomPos endZoomPos;
@@ -57,8 +67,11 @@ public class Slideshow extends BorderPane {
 
     /////////   Development   //////////
 
-    private boolean showZoom;
-    private boolean nextEndZoom;
+    private SimpleBooleanProperty showZoom;
+    private SimpleBooleanProperty zoomOnLine;
+    private SimpleBooleanProperty zoomFixedPos;
+    private SimpleBooleanProperty zoomOnCenter;
+    private SimpleBooleanProperty mouseOutOfBounds;
 
     ////////////////////////////////////
 
@@ -74,6 +87,68 @@ public class Slideshow extends BorderPane {
 
         this.preloadCount = globalSettings.preloadCount;
         this.imageHandler = ImageHandler.singleton();
+    }
+
+    private void updateSelectZoomPos(MouseEvent event) {
+        double x = event.getX();
+        double y = event.getY();
+
+        // ALT --> keep Zoom in Center
+        if(zoomOnCenter.getValue()){
+            if (!zoomOnLine.getValue()){
+                selectZoomPos.translateX.set(0.);
+                selectZoomPos.translateY.set(0.);
+            }
+            else{
+                if (abs((getWidth()/2 - x) - center.translateX.doubleValue()) < abs((getHeight()/2 - y) - center.translateY.doubleValue())){
+                    selectZoomPos.translateX.set(center.translateX.doubleValue());
+                    selectZoomPos.translateY.set(getHeight()/2 - y);
+                }
+                else{
+                    selectZoomPos.translateX.set(getWidth()/2 - x);
+                    selectZoomPos.translateY.set(center.translateY.doubleValue());
+                }
+            }
+        }
+        // CTRL --> prohibit selectZoom movement
+        else if (zoomFixedPos.getValue()) {
+            if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+                selectZoomPos.translateX.set(endZoomPos.translateX.doubleValue());
+                selectZoomPos.translateY.set(endZoomPos.translateY.doubleValue());
+            }
+            else{
+                selectZoomPos.translateX.set(startZoomPos.translateX.doubleValue());
+                selectZoomPos.translateY.set(startZoomPos.translateY.doubleValue());
+            }
+        }
+        // SHIFT --> limit  selectZoom movement to horizontal or vertical line
+        else if (zoomOnLine.getValue()){
+            if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+                if (abs((getWidth()/2 - x) - endZoomPos.translateX.doubleValue()) < abs((getHeight()/2 - y) - endZoomPos.translateY.doubleValue())){
+                    selectZoomPos.translateX.set(endZoomPos.translateX.doubleValue());
+                    selectZoomPos.translateY.set(getHeight()/2 - y);
+                }
+                else{
+                    selectZoomPos.translateX.set(getWidth()/2 - x);
+                    selectZoomPos.translateY.set(endZoomPos.translateY.doubleValue());
+                }
+            }
+            else{
+                if (abs((getWidth()/2 - x) - startZoomPos.translateX.doubleValue()) < abs((getHeight()/2 - y) - startZoomPos.translateY.doubleValue())){
+                    selectZoomPos.translateX.set(startZoomPos.translateX.doubleValue());
+                    selectZoomPos.translateY.set(getHeight()/2 - y);
+                }
+                else{
+                    selectZoomPos.translateX.set(getWidth()/2 - x);
+                    selectZoomPos.translateY.set(startZoomPos.translateY.doubleValue());
+                }
+            }
+        }
+        // Default:
+        else {
+            selectZoomPos.translateX.set(getWidth()/2 - x);
+            selectZoomPos.translateY.set(getHeight()/2 - y);
+        }
     }
 
     public void create(){
@@ -97,8 +172,25 @@ public class Slideshow extends BorderPane {
         info = InfoPanel.singleton();
         menuPanel = MenuPanel.singleton();
 
-        showZoom = false;
+        //setTop(menuPanel);
+        setCenter(imageContainer);
+        setLeft(settings);
+        setRight(info);
 
+        setMargin(imageContainer, new Insets(50, 50, 50, 50));
+
+        // Fade Animations for image/frame/background
+        createAnimations();
+
+        /////////////////////////////////////////////////////////////
+
+        showZoom = new SimpleBooleanProperty(false);
+        zoomOnCenter = new SimpleBooleanProperty(false);
+        zoomOnLine = new SimpleBooleanProperty(false);
+        zoomFixedPos = new SimpleBooleanProperty(false);
+        mouseOutOfBounds = new SimpleBooleanProperty(false);
+
+        center = new ZoomPos(1., 0, 0);
         selectZoomPos = new ZoomPos();
         startZoomPos = new ZoomPos();
         endZoomPos = new ZoomPos();
@@ -111,7 +203,6 @@ public class Slideshow extends BorderPane {
         selectZoom.heightProperty().bind(heightProperty().divide(selectZoomPos.scale));
         selectZoom.translateXProperty().bind(imageContainer.widthProperty().divide(2).subtract(selectZoomPos.translateX).subtract(selectZoom.widthProperty().divide(2)));
         selectZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(selectZoomPos.translateY).subtract(selectZoom.heightProperty().divide(2)));
-        selectZoom.setVisible(false);
 
         startZoom = new Rectangle();
         startZoom.setFill(Color.TRANSPARENT);
@@ -121,7 +212,6 @@ public class Slideshow extends BorderPane {
         startZoom.heightProperty().bind(heightProperty().divide(startZoomPos.scale));
         startZoom.translateXProperty().bind(imageContainer.widthProperty().divide(2).subtract(startZoomPos.translateX).subtract(startZoom.widthProperty().divide(2)));
         startZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(startZoomPos.translateY).subtract(startZoom.heightProperty().divide(2)));
-        startZoom.setVisible(false);
 
         endZoom = new Rectangle();
         endZoom.setFill(Color.TRANSPARENT);
@@ -131,50 +221,66 @@ public class Slideshow extends BorderPane {
         endZoom.heightProperty().bind(heightProperty().divide(endZoomPos.scale));
         endZoom.translateXProperty().bind(imageContainer.widthProperty().divide(2).subtract(endZoomPos.translateX).subtract(endZoom.widthProperty().divide(2)));
         endZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(endZoomPos.translateY).subtract(endZoom.heightProperty().divide(2)));
-        endZoom.setVisible(false);
+
+        selectZoom.visibleProperty().bind(showZoom.and(mouseOutOfBounds.not()));
+        startZoom.visibleProperty().bind(showZoom);
+        endZoom.visibleProperty().bind(showZoom);
+
+        imageContainer.setZoomRects(selectZoom, startZoom, endZoom);
+
+        zoomHorizontalHelper = new Line(0, 500, 2000, 500);
+        zoomHorizontalHelper.setStrokeWidth(2);
+        zoomHorizontalHelper.setStroke(Color.BLACK);
+
+        zoomVerticalHelper = new Line();
+        zoomVerticalHelper.setStrokeWidth(2);
+        zoomVerticalHelper.setStroke(Color.BLACK);
+
+        zoomFixedPosHelper = new Circle();
+        zoomFixedPosHelper.setStrokeWidth(15);
+        zoomFixedPosHelper.setStroke(Color.BLACK);
+
+        bindHelpers(endZoomPos);
+
+        zoomHorizontalHelper.visibleProperty().bind(showZoom.and(zoomOnLine));
+        zoomVerticalHelper.visibleProperty().bind(showZoom.and(zoomOnLine));
+        zoomFixedPosHelper.visibleProperty().bind(showZoom.and(zoomFixedPos.or(zoomOnCenter)));
+
+        imageContainer.setZoomHelpers(zoomHorizontalHelper, zoomVerticalHelper, zoomFixedPosHelper);
 
         setOnMouseMoved(event -> {
-            selectZoomPos.translateX.set(getWidth()/2 - event.getX());
-            selectZoomPos.translateY.set(getHeight()/2 - event.getY());
+            updateSelectZoomPos(event);
         });
 
         setOnMouseDragged(event -> {
-            selectZoomPos.translateX.set(getWidth()/2 - event.getX());
-            selectZoomPos.translateY.set(getHeight()/2 - event.getY());
+            updateSelectZoomPos(event);
 
-            if (!showZoom)
+            if (!showZoom.getValue())
                 return;
 
             if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
                 startZoomPos.set(selectZoomPos);
-                startZoom.setVisible(true);
             }
             else{
                 endZoomPos.set(selectZoomPos);
-                endZoom.setVisible(true);
             }
         });
 
         // Same as MouseDragged
         setOnMousePressed(event -> {
-            selectZoomPos.translateX.set(getWidth()/2 - event.getX());
-            selectZoomPos.translateY.set(getHeight()/2 - event.getY());
-
-            if (!showZoom)
+            if (!showZoom.getValue())
                 return;
 
             if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
                 startZoomPos.set(selectZoomPos);
-                startZoom.setVisible(true);
             }
             else{
                 endZoomPos.set(selectZoomPos);
-                endZoom.setVisible(true);
             }
         });
 
         setOnScroll(event -> {
-            if (!showZoom)
+            if (!showZoom.getValue())
                 return;
 
             // Test on different Mouse
@@ -182,56 +288,105 @@ public class Slideshow extends BorderPane {
                 selectZoomPos.scale.set(min(selectZoomPos.scale.doubleValue()*1.05, 15.));
             }
             else if (event.getDeltaY() < 0){
-                selectZoomPos.scale.set(max(selectZoomPos.scale.doubleValue()*0.95, 1.));
+                selectZoomPos.scale.set(max(selectZoomPos.scale.doubleValue()/1.05, 1.));
             }
             else{
-                System.out.println("WARNING: Unexpected MouseScroll DeltaY-value: 0");
+                if (event.getDeltaX() > 0){
+                    selectZoomPos.scale.set(min(selectZoomPos.scale.doubleValue()*1.05, 15.));
+                }
+                else if (event.getDeltaX() < 0){
+                    selectZoomPos.scale.set(max(selectZoomPos.scale.doubleValue()*0.95, 1.));
+                }
+                else{
+                    System.out.println("WARNING: Unexpected MouseScroll DeltaY-value: 0");
+                }
             }
 
         });
 
         setOnMouseReleased(event -> {
-            if (!showZoom)
+            if (!showZoom.getValue())
                 return;
 
             if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
                 startZoomPos.set(selectZoomPos);
-                startZoom.setVisible(true);
                 selectZoom.setStroke(Color.ORANGE);
                 // uncomment to enable selectZoom rescale to endZoom
                 //selectZoomPos.set(endZoomPos);
+
+                if (!zoomOnCenter.getValue()){
+                    unbindHelpers();
+                    bindHelpers(startZoomPos);
+                }
+
+                imageHandler.saveStartZoom(index, startZoomPos);
             }
             else{
                 endZoomPos.set(selectZoomPos);
-                endZoom.setVisible(true);
                 selectZoom.setStroke(Color.GREENYELLOW);
-                selectZoomPos.set(startZoomPos);
+                // uncomment to enable selectZoom rescale to startZoom
+                //selectZoomPos.set(startZoomPos);
+
+                if (!zoomOnCenter.getValue()){
+                    unbindHelpers();
+                    bindHelpers(endZoomPos);
+                }
+
+                imageHandler.saveEndZoom(index, endZoomPos);
             }
         });
 
-
         setOnMouseExited(event -> {
-            if (showZoom)
-                selectZoom.setVisible(false);
+            mouseOutOfBounds.set(true);
         });
 
         setOnMouseEntered(event -> {
-            if (showZoom)
-                selectZoom.setVisible(true);
+            mouseOutOfBounds.set(false);
         });
 
-        imageContainer.setZoomRects(selectZoom, startZoom, endZoom);
+    }
 
-        //setTop(menuPanel);
-        setCenter(imageContainer);
-        setLeft(settings);
-        setRight(info);
+    private void bindHelpers(ZoomPos zoomPos) {
+        zoomHorizontalHelper.setStartX(-getMargin(imageContainer).getLeft());
+        zoomHorizontalHelper.endXProperty().bind(widthProperty());
+        zoomHorizontalHelper.startYProperty().bind(imageContainer.heightProperty().divide(2).subtract(zoomPos.translateY));
+        zoomHorizontalHelper.endYProperty().bind(imageContainer.heightProperty().divide(2).subtract(zoomPos.translateY));
 
-        setMargin(imageContainer, new Insets(50, 50, 50, 50));
+        zoomVerticalHelper.startXProperty().bind(imageContainer.widthProperty().divide(2).subtract(zoomPos.translateX));
+        zoomVerticalHelper.endXProperty().bind(imageContainer.widthProperty().divide(2).subtract(zoomPos.translateX));
+        zoomVerticalHelper.setStartY(-getMargin(imageContainer).getTop());
+        zoomVerticalHelper.endYProperty().bind(heightProperty());
 
-        // Fade Animations for image/frame/background
-        createAnimations();
+        zoomFixedPosHelper.centerXProperty().bind(imageContainer.widthProperty().divide(2).subtract(zoomPos.translateX));
+        zoomFixedPosHelper.centerYProperty().bind(imageContainer.heightProperty().divide(2).subtract(zoomPos.translateY));
+    }
 
+    private void bindHelpersToCenter(){
+        zoomHorizontalHelper.setStartX(0.0);
+        zoomHorizontalHelper.endXProperty().bind(widthProperty());
+        zoomHorizontalHelper.startYProperty().bind(imageContainer.heightProperty().divide(2).subtract(center.translateY));
+        zoomHorizontalHelper.endYProperty().bind(imageContainer.heightProperty().divide(2).subtract(center.translateY));
+
+        zoomVerticalHelper.startXProperty().bind(imageContainer.widthProperty().divide(2).subtract(center.translateX));
+        zoomVerticalHelper.endXProperty().bind(imageContainer.widthProperty().divide(2).subtract(center.translateX));
+        zoomVerticalHelper.setStartY(0);
+        zoomVerticalHelper.endYProperty().bind(heightProperty());
+
+        zoomFixedPosHelper.centerXProperty().bind(imageContainer.widthProperty().divide(2).subtract(center.translateX));
+        zoomFixedPosHelper.centerYProperty().bind(imageContainer.heightProperty().divide(2).subtract(center.translateY));
+    }
+
+    private void unbindHelpers() {
+        zoomHorizontalHelper.endXProperty().unbind();
+        zoomHorizontalHelper.startYProperty().unbind();
+        zoomHorizontalHelper.endYProperty().unbind();
+
+        zoomVerticalHelper.startXProperty().unbind();
+        zoomVerticalHelper.endXProperty().unbind();
+        zoomVerticalHelper.endYProperty().unbind();
+
+        zoomFixedPosHelper.centerXProperty().unbind();
+        zoomFixedPosHelper.centerYProperty().unbind();
     }
 
     public void createAnimations(){
@@ -290,17 +445,16 @@ public class Slideshow extends BorderPane {
         backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index)));
         backgroundHandler.resetNextBC();
 
-        showZoom = false;
+        showZoom.set(false);
+        zoomOnCenter.set(false);
+        zoomOnLine.set(false);
+        zoomFixedPos.set(false);
 
         startZoomPos.set(imageHandler.getStartZoom(index));
         endZoomPos.set(imageHandler.getEndZoom(index));
 
         selectZoom.setStroke(Color.GREENYELLOW);
         selectZoomPos.set(startZoomPos);
-
-        selectZoom.setVisible(false);
-        startZoom.setVisible(false);
-        endZoom.setVisible(false);
 
         menuPanel.setMaxWidth(MAX_VALUE);
         menuPanel.setActive("slideshow");
@@ -457,25 +611,68 @@ public class Slideshow extends BorderPane {
     }
 
     public void setZoom() {
-        if (!showZoom) {
+        if (!showZoom.getValue()) {
             selectZoomPos.scale.set(startZoomPos.scale.doubleValue());
 
-            selectZoom.setVisible(true);
-            startZoom.setVisible(true);
-            endZoom.setVisible(true);
-
-            showZoom = true;
+            showZoom.set(true);
         }
         else{
-            selectZoom.setVisible(false);
-            startZoom.setVisible(false);
-            endZoom.setVisible(false);
-
-            // reset selectZoom
-            selectZoomPos.set(3., 0., 0.);
-
-            showZoom = false;
+            showZoom.set(false);
         }
+    }
+
+    public void lockZoomOnCenter(){
+        zoomOnCenter.set(true);
+
+        unbindHelpers();
+        bindHelpersToCenter();
+
+        selectZoomPos.set(selectZoomPos.scale.doubleValue(), 0, 0);
+    }
+
+    public void lockZoomOnLine() {
+        zoomOnLine.set(true);
+
+        // TODO: move selectZoom to MousePos on Line
+    }
+
+    public void lockZoomFixedPos() {
+        zoomFixedPos.set(true);
+
+        if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+            selectZoomPos.translateX.set(endZoomPos.translateX.doubleValue());
+            selectZoomPos.translateY.set(endZoomPos.translateY.doubleValue());
+        }
+        else{
+            selectZoomPos.translateX.set(startZoomPos.translateX.doubleValue());
+            selectZoomPos.translateY.set(startZoomPos.translateY.doubleValue());
+        }
+    }
+
+    public void releaseZoomOnCenter() {
+        zoomOnCenter.set(false);
+
+        unbindHelpers();
+        if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+            bindHelpers(endZoomPos);
+        }
+        else{
+            bindHelpers(startZoomPos);
+        }
+
+        // TODO: move selectZoom to correct MousePos
+    }
+
+    public void releaseZoomOnLine() {
+        zoomOnLine.set(false);
+
+        // TODO: move selectZoom to correct MousePos
+    }
+
+    public void releaseZoomFixedPos() {
+        zoomFixedPos.set(false);
+
+        // TODO: move selectZoom to correct MousePos
     }
 
     public int getIndex() {
@@ -493,5 +690,4 @@ public class Slideshow extends BorderPane {
     public static boolean isSquare(Image img){
         return img.getHeight() == img.getWidth();
     }
-
 }

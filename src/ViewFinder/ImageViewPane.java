@@ -6,6 +6,8 @@ import javafx.geometry.HPos;
 import javafx.geometry.VPos;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 
 public class ImageViewPane extends Region {
@@ -36,7 +38,9 @@ public class ImageViewPane extends Region {
 
     public void setZoomRects(Rectangle selectZoom, Rectangle startZoom, Rectangle endZoom){
         getChildren().addAll(selectZoom, startZoom, endZoom);
-
+    }
+    public void setZoomHelpers(Line zoomHorizontalHelper, Line zoomVerticalHelper, Circle zoomFixedPosHelper) {
+        getChildren().addAll(zoomHorizontalHelper, zoomVerticalHelper, zoomFixedPosHelper);
     }
 
     public void toggleFrame(){
@@ -75,4 +79,5 @@ public class ImageViewPane extends Region {
     public static int even(double x){
         return ((int)(x/2))*2;
     }
+
 }

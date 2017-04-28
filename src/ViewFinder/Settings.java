@@ -94,11 +94,22 @@ class ImageSettings extends Settings {
     protected void writeImageSettings(PrintWriter fileWriter){
         //handle "null"-Exceptions for primitive types
 
-
         if (backgroundColor != null)
             fileWriter.println("backgroundColor -> "+backgroundColor); // format: 0xffffffff
-        if (frameColor!= null)
+        if (frameColor !=  null)
             fileWriter.println("frameColor -> "+frameColor); // format: 0xffffffff
+        if (startZoomPos != null)
+            fileWriter.println("startZoomPos -> "
+                    +String.valueOf(startZoomPos.scale.doubleValue())
+                    +", "+String.valueOf(startZoomPos.translateX.doubleValue())
+                    +", "+String.valueOf(startZoomPos.translateY.doubleValue()));
+                    // format: (scale, translateX, translateY)
+        if (endZoomPos != null)
+            fileWriter.println("endZoomPos -> "
+                    +String.valueOf(endZoomPos.scale.doubleValue())
+                    +", "+String.valueOf(endZoomPos.translateX.doubleValue())
+                    +", "+String.valueOf(endZoomPos.translateY.doubleValue()));
+                    // format: (scale, translateX, translateY)
         fileWriter.println("frameSize -> "+String.valueOf(frameSize));
         fileWriter.println("hasFrame -> "+String.valueOf(hasFrame));
     }
@@ -129,6 +140,16 @@ class ImageSettings extends Settings {
         return true;
     }
 
+    private static ZoomPos decodeZoomPos(String value){
+        //assert: #count of ", " == 2
+        String values[] = value.split(", ", 3);
+        double scale = Double.valueOf(values[0]);
+        double translateX = Double.valueOf(values[1]);
+        double translateY = Double.valueOf(values[2]);
+
+        return new ZoomPos(scale, translateX, translateY);
+    }
+
     protected boolean handleImageId(String id, String value){
         try{
             switch(id){
@@ -143,6 +164,12 @@ class ImageSettings extends Settings {
                     break;
                 case "hasFrame":
                     hasFrame = Boolean.valueOf(value);
+                    break;
+                case "startZoomPos":
+                    startZoomPos = decodeZoomPos(value);
+                    break;
+                case "endZoomPos":
+                    endZoomPos = decodeZoomPos(value);
                     break;
                 default:
                     System.out.format("WARNING encountered unknown id '%s' and value '%s' while reading file '%s'\n", id, value, file.toString());

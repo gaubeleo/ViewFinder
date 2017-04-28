@@ -338,6 +338,26 @@ public class ImageHandler {
         return settings.get(file).endZoomPos;
     }
 
+    public void saveStartZoom(int index, ZoomPos startZoomPos){
+        saveStartZoom(files.get(index), startZoomPos);
+    }
+
+    public void saveStartZoom(File file, ZoomPos startZoomPos){
+        ImageSettings imageSettings = settings.get(file);
+        imageSettings.startZoomPos = startZoomPos;
+        imageSettings.save();
+    }
+
+    public void saveEndZoom(int index, ZoomPos endZoomPos){
+        saveEndZoom(files.get(index), endZoomPos);
+    }
+
+    public void saveEndZoom(File file, ZoomPos endZoomPos){
+        ImageSettings imageSettings = settings.get(file);
+        imageSettings.endZoomPos = endZoomPos;
+        imageSettings.save();
+    }
+
     public int getFileCount(){
         return files.size();
     }
