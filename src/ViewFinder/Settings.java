@@ -1,5 +1,6 @@
 package ViewFinder;
 
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
@@ -28,13 +29,44 @@ abstract class Settings {
     public abstract boolean save();
 }
 
+class ZoomPos{
+    public SimpleDoubleProperty scale;
+    public SimpleDoubleProperty translateX;
+    public SimpleDoubleProperty translateY;
+
+    public ZoomPos(){
+        scale = new SimpleDoubleProperty(3.);
+        translateX = new SimpleDoubleProperty(0.);
+        translateY = new SimpleDoubleProperty(0.);
+    }
+
+    public ZoomPos(double s, double x, double y){
+        scale = new SimpleDoubleProperty(s);
+        translateX = new SimpleDoubleProperty(x);
+        translateY = new SimpleDoubleProperty(y);
+    }
+
+    public void set(double s, double x, double y){
+        scale.set(s);
+        translateX.set(x);
+        translateY.set(y);
+    }
+
+    public void set(ZoomPos zoomPos){
+        scale.set(zoomPos.scale.doubleValue());
+        translateX.set(zoomPos.translateX.doubleValue());
+        translateY.set(zoomPos.translateY.doubleValue());
+    }
+}
+
 class ImageSettings extends Settings {
     public Color backgroundColor;
     public boolean hasFrame;
     public Color frameColor;
     public int frameSize;
 
-
+    public ZoomPos startZoomPos;
+    public ZoomPos endZoomPos;
 
     public ImageSettings(String fileName, String projectName){
         super(fileName, projectName);

@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
@@ -31,9 +32,19 @@ public class Slideshow extends BorderPane {
     private ImageView image;
     private Rectangle frame;
 
+    private Rectangle selectZoom;
+    private Rectangle startZoom;
+    private Rectangle endZoom;
+
+    private ZoomPos selectZoomPos;
+    private ZoomPos startZoomPos;
+    private ZoomPos endZoomPos;
+
     ////////////////////////////////////
 
+    private ParallelTransition zoomTransition;
     private TranslateTransition zoomTranslation;
+    private ScaleTransition zoomScale;
 
     private FadeTransition imageFadeIn;
     private FadeTransition imageFade;
@@ -41,6 +52,11 @@ public class Slideshow extends BorderPane {
     private FadeTransition frameFade;
 
     private Transition backgroundFade;
+
+    /////////   Development   //////////
+
+    private boolean showZoom;
+    private boolean nextEndZoom;
 
     ////////////////////////////////////
 
@@ -79,6 +95,128 @@ public class Slideshow extends BorderPane {
         info = InfoPanel.singleton();
         menuPanel = MenuPanel.singleton();
 
+        showZoom = false;
+
+        selectZoomPos = new ZoomPos();
+        startZoomPos = new ZoomPos();
+        endZoomPos = new ZoomPos();
+
+        selectZoom = new Rectangle();
+        selectZoom.setFill(Color.TRANSPARENT);
+        selectZoom.setStrokeWidth(2);
+        selectZoom.setStroke(Color.GREENYELLOW);
+        selectZoom.widthProperty().bind(widthProperty().divide(selectZoomPos.scale));
+        selectZoom.heightProperty().bind(heightProperty().divide(selectZoomPos.scale));
+        selectZoom.translateXProperty().bind(imageContainer.widthProperty().divide(2).subtract(selectZoomPos.translateX).subtract(selectZoom.widthProperty().divide(2)));
+        selectZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(selectZoomPos.translateY).subtract(selectZoom.heightProperty().divide(2)));
+        selectZoom.setVisible(false);
+
+        startZoom = new Rectangle();
+        startZoom.setFill(Color.TRANSPARENT);
+        startZoom.setStrokeWidth(2);
+        startZoom.setStroke(Color.GREEN);
+        startZoom.widthProperty().bind(widthProperty().divide(startZoomPos.scale));
+        startZoom.heightProperty().bind(heightProperty().divide(startZoomPos.scale));
+        startZoom.translateXProperty().bind(imageContainer.widthProperty().divide(2).subtract(startZoomPos.translateX).subtract(startZoom.widthProperty().divide(2)));
+        startZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(startZoomPos.translateY).subtract(startZoom.heightProperty().divide(2)));
+        startZoom.setVisible(false);
+
+        endZoom = new Rectangle();
+        endZoom.setFill(Color.TRANSPARENT);
+        endZoom.setStrokeWidth(2);
+        endZoom.setStroke(Color.RED);
+        endZoom.widthProperty().bind(widthProperty().divide(endZoomPos.scale));
+        endZoom.heightProperty().bind(heightProperty().divide(endZoomPos.scale));
+        endZoom.translateXProperty().bind(imageContainer.widthProperty().divide(2).subtract(endZoomPos.translateX).subtract(endZoom.widthProperty().divide(2)));
+        endZoom.translateYProperty().bind(imageContainer.heightProperty().divide(2).subtract(endZoomPos.translateY).subtract(endZoom.heightProperty().divide(2)));
+        endZoom.setVisible(false);
+
+        imageContainer.setOnMouseMoved(event -> {
+            selectZoomPos.translateX.set(getWidth()/2 - event.getX());
+            selectZoomPos.translateY.set(getHeight()/2 - event.getY());
+        });
+
+        imageContainer.setOnMouseDragged(event -> {
+            selectZoomPos.translateX.set(getWidth()/2 - event.getX());
+            selectZoomPos.translateY.set(getHeight()/2 - event.getY());
+
+            if (!showZoom)
+                return;
+
+            if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+                startZoomPos.set(selectZoomPos);
+                startZoom.setVisible(true);
+            }
+            else{
+                endZoomPos.set(selectZoomPos);
+                endZoom.setVisible(true);
+            }
+        });
+
+        // Same as MouseDragged
+        imageContainer.setOnMousePressed(event -> {
+            selectZoomPos.translateX.set(getWidth()/2 - event.getX());
+            selectZoomPos.translateY.set(getHeight()/2 - event.getY());
+
+            if (!showZoom)
+                return;
+
+            if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+                startZoomPos.set(selectZoomPos);
+                startZoom.setVisible(true);
+            }
+            else{
+                endZoomPos.set(selectZoomPos);
+                endZoom.setVisible(true);
+            }
+        });
+
+        imageContainer.setOnScroll(event -> {
+            if (!showZoom)
+                return;
+
+            // Test on different Mouse
+            if (event.getDeltaY() > 0){
+                selectZoomPos.scale.add(0.5);
+            }
+            else if (event.getDeltaY() < 0){
+                selectZoomPos.scale.subtract(0.5);
+            }
+            else{
+                System.out.println("WARNING: Unexpected MouseScroll DeltaY-value: 0");
+            }
+
+        });
+
+        imageContainer.setOnMouseReleased(event -> {
+            if (!showZoom)
+                return;
+
+            if (selectZoom.getStroke().equals(Color.GREENYELLOW)){
+                startZoomPos.set(selectZoomPos);
+                startZoom.setVisible(true);
+                selectZoom.setStroke(Color.ORANGE);
+            }
+            else{
+                endZoomPos.set(selectZoomPos);
+                endZoom.setVisible(true);
+                selectZoom.setStroke(Color.GREENYELLOW);
+            }
+        });
+
+
+        imageContainer.setOnMouseExited(event -> {
+            if (showZoom)
+                selectZoom.setVisible(false);
+        });
+
+        imageContainer.setOnMouseEntered(event -> {
+            if (showZoom)
+                selectZoom.setVisible(true);
+        });
+
+        imageContainer.setZoomRects(selectZoom, startZoom, endZoom);
+
         //setTop(menuPanel);
         setCenter(imageContainer);
         setLeft(settings);
@@ -88,13 +226,19 @@ public class Slideshow extends BorderPane {
 
         // Fade Animations for image/frame/background
         createAnimations();
+
     }
 
     public void createAnimations(){
         Duration duration = globalSettings.fadeDuration;
 
         zoomTranslation =  new TranslateTransition(new Duration(4500), imageContainer);
-        zoomTranslation.setOnFinished(event -> {
+        zoomTranslation.setInterpolator(Interpolator.SPLINE(0.6, 0., 0.4, 1.));
+        zoomScale =  new ScaleTransition(new Duration(4500), imageContainer);
+
+        zoomTransition = new ParallelTransition();
+        zoomTransition.getChildren().addAll(zoomTranslation, zoomScale);
+        zoomTransition.setOnFinished(event -> {
             imageContainer.translateXProperty().set(0);
             imageContainer.translateYProperty().set(0);
 
@@ -112,6 +256,11 @@ public class Slideshow extends BorderPane {
         imageFade.setOnFinished(e -> {
             image.setImage(imageHandler.get(index));
             imageFadeIn.play();
+
+            startZoomPos.set(imageHandler.getStartZoom(index));
+            endZoomPos.set(imageHandler.getEndZoom(index));
+
+            selectZoom.setStroke(Color.GREENYELLOW);
         });
 
         fadeInFrame = new FadeTransition(duration, frame);
@@ -134,8 +283,18 @@ public class Slideshow extends BorderPane {
         backgroundHandler.setCurrentBC(imageHandler.getBackgroundColor(getRealIndex(index)));
         backgroundHandler.resetNextBC();
 
+        startZoomPos.set(imageHandler.getStartZoom(index));
+        endZoomPos.set(imageHandler.getEndZoom(index));
+
         menuPanel.setMaxWidth(MAX_VALUE);
         menuPanel.setActive("slideshow");
+
+        showZoom = false;
+        nextEndZoom = false;
+
+        selectZoom.setVisible(false);
+        startZoom.setVisible(false);
+        endZoom.setVisible(false);
 
         //setTop(menuPanel);
         setLeft(settings);
@@ -244,31 +403,6 @@ public class Slideshow extends BorderPane {
         info.slideInOut();
     }
 
-    public void zoom(){
-        if (zoomTranslation.statusProperty().get() != Animation.Status.STOPPED)
-            return;
-
-        if (isLandscape(image.getImage())){
-            zoomTranslation.setFromX(400);
-            zoomTranslation.setToX(-400);
-            zoomTranslation.setFromY(0);
-            zoomTranslation.setToY(0);
-        }
-        else{
-            zoomTranslation.setFromX(0);
-            zoomTranslation.setToX(0);
-            zoomTranslation.setFromY(-400);
-            zoomTranslation.setToY(400);
-        }
-
-        double scale = 2.75;
-
-        imageContainer.setScaleX(scale);
-        imageContainer.setScaleY(scale);
-
-        zoomTranslation.play();
-    }
-
     public void frameImage(){
         imageContainer.toggleFrame();
     }
@@ -295,6 +429,46 @@ public class Slideshow extends BorderPane {
         return i;
     }
 
+    public void zoom(){
+        if (zoomTransition.statusProperty().get() != Animation.Status.STOPPED)
+            return;
+
+        zoomScale.setFromX(startZoomPos.scale.doubleValue());
+        zoomScale.setFromY(startZoomPos.scale.doubleValue());
+        zoomTranslation.setFromX(startZoomPos.translateX.doubleValue()*startZoomPos.scale.doubleValue());
+        zoomTranslation.setFromY(startZoomPos.translateY.doubleValue()*startZoomPos.scale.doubleValue());
+
+        zoomScale.setToX(endZoomPos.scale.doubleValue());
+        zoomScale.setToY(endZoomPos.scale.doubleValue());
+        zoomTranslation.setToX(endZoomPos.translateX.doubleValue()*endZoomPos.scale.doubleValue());
+        zoomTranslation.setToY(endZoomPos.translateY.doubleValue()*endZoomPos.scale.doubleValue());
+
+
+        zoomTransition.play();
+    }
+
+    public void setZoom() {
+        if (!showZoom) {
+            selectZoomPos.scale.set(startZoomPos.scale.doubleValue());
+
+            selectZoom.setVisible(true);
+            startZoom.setVisible(true);
+            endZoom.setVisible(true);
+
+            showZoom = true;
+        }
+        else{
+            selectZoom.setVisible(false);
+            startZoom.setVisible(false);
+            endZoom.setVisible(false);
+
+            // reset selectZoom
+            selectZoomPos.set(3., 0., 0.);
+
+            showZoom = false;
+        }
+    }
+
     public int getIndex() {
         return index;
     }
@@ -310,4 +484,5 @@ public class Slideshow extends BorderPane {
     public static boolean isSquare(Image img){
         return img.getHeight() == img.getWidth();
     }
+
 }

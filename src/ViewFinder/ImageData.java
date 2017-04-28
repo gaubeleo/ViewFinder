@@ -17,6 +17,9 @@ class ImageData {
 
     public Vector<String> keywords;
 
+    public ZoomPos startZoom;
+    public ZoomPos endZoom;
+
     public ImageData(File filename){
 
     }

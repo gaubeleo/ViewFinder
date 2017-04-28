@@ -1,7 +1,6 @@
 package ViewFinder;
 
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 
 public class KeyController {
     private static KeyController instance;
@@ -99,6 +98,10 @@ public class KeyController {
 
             case SPACE:
                 slideshow.zoom();
+                break;
+
+            case Z:
+                slideshow.setZoom();
                 break;
 
             case I:

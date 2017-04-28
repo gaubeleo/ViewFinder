@@ -1,6 +1,5 @@
 package ViewFinder;
 
-
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.HPos;
@@ -8,7 +7,6 @@ import javafx.geometry.VPos;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
-
 
 public class ImageViewPane extends Region {
     private ObjectProperty<ImageView> imageViewProperty = new SimpleObjectProperty<ImageView>();
@@ -34,6 +32,11 @@ public class ImageViewPane extends Region {
         this.frame = frame;
         getChildren().add(frame);
         frame.toBack();
+    }
+
+    public void setZoomRects(Rectangle selectZoom, Rectangle startZoom, Rectangle endZoom){
+        getChildren().addAll(selectZoom, startZoom, endZoom);
+
     }
 
     public void toggleFrame(){

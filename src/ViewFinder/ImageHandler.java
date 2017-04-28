@@ -318,6 +318,26 @@ public class ImageHandler {
         return globalSettings.backgroundColor;
     }
 
+    public ZoomPos getStartZoom(int index){
+        return getStartZoom(files.get(index));
+    }
+
+    public ZoomPos getStartZoom(File file){
+        if (settings.get(file).startZoomPos == null)
+            return new ZoomPos(2.8, 0, 0);
+        return settings.get(file).startZoomPos;
+    }
+
+    public ZoomPos getEndZoom(int index){
+        return getEndZoom(files.get(index));
+    }
+
+    public ZoomPos getEndZoom(File file){
+        if (settings.get(file).endZoomPos == null)
+            return new ZoomPos(3.3, 0, 0);
+        return settings.get(file).endZoomPos;
+    }
+
     public int getFileCount(){
         return files.size();
     }
