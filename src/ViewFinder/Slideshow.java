@@ -19,6 +19,7 @@ import static java.lang.Double.MAX_VALUE;
 import static java.lang.Math.abs;
 import static java.lang.Math.min;
 import static java.lang.Math.max;
+import static java.lang.Thread.sleep;
 
 public class Slideshow extends BorderPane {
     private final ViewFinder vf;
@@ -400,6 +401,11 @@ public class Slideshow extends BorderPane {
         zoomTransition = new ParallelTransition();
         zoomTransition.getChildren().addAll(zoomTranslation, zoomScale);
         zoomTransition.setOnFinished(event -> {
+            try {
+                sleep(750);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             imageContainer.translateXProperty().set(0);
             imageContainer.translateYProperty().set(0);
 
